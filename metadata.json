@@ -1,0 +1,5 @@
+{
+  "name": "Myntmore Work Update Tracker",
+  "description": "An internal operational tool for Myntmore to track daily work logs and generate AI-powered monthly productivity reports for executive review.",
+  "requestFramePermissions": []
+}
