@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [createAdminForm, setCreateAdminForm] = useState({ name: '', email: '', password: '' }); // New state for admin creation
   const [loginError, setLoginError] = useState('');
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false); // Toggle for create admin view
+  const [isLoading, setIsLoading] = useState(false); // Global loading state for async operations
 
   // Initial load
   useEffect(() => {
@@ -41,40 +42,51 @@ const App: React.FC = () => {
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const allUsers = await storageService.getUsers();
-    const user = allUsers.find(u => u.email === loginForm.email && u.password === loginForm.password);
+    setIsLoading(true);
+    setLoginError('');
+    try {
+      const allUsers = await storageService.getUsers();
+      const user = allUsers.find(u => u.email === loginForm.email && u.password === loginForm.password);
 
-    if (user) {
-      if (!user.isActive) {
-        setLoginError('Account is disabled. Contact admin.');
-        return;
-      }
-
-      // Role verification
-      if (loginView === 'ADMIN' && user.role !== UserRole.ADMIN) {
-        setLoginError('Access Denied: Not an authorized administrator account.');
-        return;
-      }
-
-      if (loginView === 'TEAM' && user.role !== UserRole.USER) {
-        if (user.role === UserRole.ADMIN) {
-          setLoginError('Please use the Admin Portal for administrator accounts.');
+      if (user) {
+        if (!user.isActive) {
+          setLoginError('Account is disabled. Contact admin.');
           return;
         }
-      }
 
-      const newAuth = { user, isAuthenticated: true };
-      setAuth(newAuth);
-      localStorage.setItem('myntmore_auth', JSON.stringify(newAuth));
-      setLoginError('');
-    } else {
-      setLoginError('Invalid credentials.');
+        // Role verification
+        if (loginView === 'ADMIN' && user.role !== UserRole.ADMIN) {
+          setLoginError('Access Denied: Not an authorized administrator account.');
+          return;
+        }
+
+        if (loginView === 'TEAM' && user.role !== UserRole.USER) {
+          if (user.role === UserRole.ADMIN) {
+            setLoginError('Please use the Admin Portal for administrator accounts.');
+            return;
+          }
+        }
+
+        const newAuth = { user, isAuthenticated: true };
+        setAuth(newAuth);
+        localStorage.setItem('myntmore_auth', JSON.stringify(newAuth));
+        setLoginError('');
+      } else {
+        setLoginError('Invalid credentials.');
+      }
+    } catch (error) {
+      console.error(error);
+      setLoginError('Failed to connect to the server.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Handle Create Admin
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setLoginError('');
     try {
       const newAdmin: User = {
         id: Math.random().toString(36).substr(2, 9), // Or let Supabase handle IDs if using Auth, but we are using custom table
@@ -92,9 +104,16 @@ const App: React.FC = () => {
       setLoginForm({ email: createAdminForm.email, password: createAdminForm.password });
       setLoginError('Admin account created. Please log in.');
       setCreateAdminForm({ name: '', email: '', password: '' });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setLoginError('Failed to create admin account.');
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('unique constraint') || errorMessage.includes('already exists')) {
+        setLoginError('Account already exists with this email. Please back to login.');
+      } else {
+        setLoginError(`Failed to create admin account: ${errorMessage || 'Check your connection.'}`);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -240,11 +259,15 @@ const App: React.FC = () => {
                   />
                 </div>
 
+                {loginError && <p className="text-red-500 text-xs font-bold uppercase text-center bg-red-500/10 p-3 border border-red-500/20">{loginError}</p>}
+
                 <button
                   type="submit"
-                  className="w-full bg-accent text-black p-5 font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-colors"
+                  disabled={isLoading}
+                  className={`w-full p-5 font-black uppercase tracking-[0.2em] text-xs transition-colors ${isLoading ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-accent text-black hover:bg-white'
+                    }`}
                 >
-                  Create Account
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
                 </button>
               </form>
             </div>
@@ -292,9 +315,11 @@ const App: React.FC = () => {
 
                 <button
                   type="submit"
-                  className="w-full bg-accent text-black p-5 font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-colors"
+                  disabled={isLoading}
+                  className={`w-full p-5 font-black uppercase tracking-[0.2em] text-xs transition-colors ${isLoading ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-accent text-black hover:bg-white'
+                    }`}
                 >
-                  {loginView === 'ADMIN' ? 'Access Admin Dashboard' : 'Access Workspace'}
+                  {isLoading ? 'Processing...' : (loginView === 'ADMIN' ? 'Access Admin Dashboard' : 'Access Workspace')}
                 </button>
               </form>
 
