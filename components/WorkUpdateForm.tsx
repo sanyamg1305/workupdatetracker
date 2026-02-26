@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Icons, CATEGORY_LABELS } from '../constants';
-import { Task, MissedTask, Blocker, TaskCategory, DailyWorkUpdate, User } from '../types';
+import { Task, MissedTask, Blocker, TaskCategory, DailyWorkUpdate, User, ProjectTask } from '../types';
+import { storageService } from '../services/storageService';
 
 interface WorkUpdateFormProps {
   user: User;
@@ -29,6 +30,11 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
   const [blockers, setBlockers] = useState<Blocker[]>([]);
   const [productivityScore, setProductivityScore] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
+
+  useEffect(() => {
+    storageService.getTasksByUser(user.id).then(setProjectTasks);
+  }, [user.id]);
 
   const totalTime = tasks.reduce((acc, t) => acc + (Number(t.timeSpent) || 0), 0);
   const totalHours = Math.floor(totalTime);
@@ -57,7 +63,6 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
 
       const updatedTask = { ...t, [field]: value };
 
-      // Recalculate timeSpent if hours or minutes change
       if (field === 'hours' || field === 'minutes') {
         const h = field === 'hours' ? Number(value) : t.hours;
         const m = field === 'minutes' ? Number(value) : t.minutes;
@@ -65,6 +70,20 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
       }
 
       return updatedTask;
+    }));
+  };
+
+  const linkProjectTask = (taskId: string, targetId: string) => {
+    const pt = projectTasks.find(t => t.id === taskId);
+    if (!pt) return;
+
+    setTasks(tasks.map(t => {
+      if (t.id !== targetId) return t;
+      return {
+        ...t,
+        description: `[${pt.client}] ${pt.title}`,
+        category: TaskCategory.HPA // Default to HPA for linked tasks
+      };
     }));
   };
 
@@ -169,9 +188,20 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                   value={task.description}
                   onChange={(e) => updateTask(task.id, 'description', e.target.value)}
                   placeholder="What did you work on?"
-                  className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-sm"
                   required
                 />
+                <div className="mt-2">
+                  <select
+                    className="w-full bg-muted border border-border border-dashed p-1.5 text-[8px] uppercase font-black tracking-widest text-gray-400 outline-none focus:border-accent transition-colors"
+                    onChange={(e) => linkProjectTask(e.target.value, task.id)}
+                    value=""
+                  >
+                    <option value="">+ Link Project Task</option>
+                    {projectTasks.map(pt => (
+                      <option key={pt.id} value={pt.id}>{pt.client}: {pt.title}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="col-span-6 md:col-span-3 flex space-x-2">
                 <div className="flex-1">

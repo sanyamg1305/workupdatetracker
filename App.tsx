@@ -7,12 +7,13 @@ import Layout from './components/Layout';
 import WorkUpdateForm from './components/WorkUpdateForm';
 import AdminDashboard from './components/AdminDashboard';
 import UserManagement from './components/UserManagement';
+import TaskSystem from './components/TaskSystem';
 import { Icons, ACCENT_COLOR } from './constants';
 import logo from './logo.png';
 
 const App: React.FC = () => {
   const [auth, setAuth] = useState<AuthState>({ user: null, isAuthenticated: false });
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'logs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'logs' | 'tasks'>('dashboard');
   const [users, setUsers] = useState<User[]>([]);
   const [updates, setUpdates] = useState<DailyWorkUpdate[]>([]);
   const [isNewUpdateOpen, setIsNewUpdateOpen] = useState(false);
@@ -435,6 +436,11 @@ const App: React.FC = () => {
           onAddUser={handleAddUser}
           onUpdateUser={handleUpdateUser}
           onDeleteUser={handleDeleteUser}
+        />
+      ) : activeTab === 'tasks' ? (
+        <TaskSystem
+          user={auth.user!}
+          users={users}
         />
       ) : null}
     </Layout>

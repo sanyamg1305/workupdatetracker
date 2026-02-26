@@ -9,8 +9,8 @@ interface LayoutProps {
   user: User | null;
   onLogout: () => void;
   children: React.ReactNode;
-  activeTab?: 'dashboard' | 'users' | 'logs';
-  onTabChange?: (tab: 'dashboard' | 'users' | 'logs') => void;
+  activeTab?: 'dashboard' | 'users' | 'logs' | 'tasks';
+  onTabChange?: (tab: 'dashboard' | 'users' | 'logs' | 'tasks') => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({ user, onLogout, children, activeTab, onTabChange }) => {
@@ -41,6 +41,13 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children, activeTab, on
                     User Management
                   </button>
                 )}
+                <button
+                  onClick={() => onTabChange?.('tasks')}
+                  className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${activeTab === 'tasks' ? 'text-accent bg-muted' : 'text-primary hover:bg-muted'
+                    }`}
+                >
+                  Project Tasks
+                </button>
               </nav>
             )}
           </div>

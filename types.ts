@@ -67,3 +67,53 @@ export interface MonthlyStats {
   avgProductivity: number;
   daysMissed: number;
 }
+
+export enum ProjectTaskStatus {
+  NOT_STARTED = 'NOT_STARTED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED'
+}
+
+export enum ProjectTaskPriority {
+  HIGH = 'HIGH',
+  MEDIUM = 'MEDIUM',
+  LOW = 'LOW'
+}
+
+export enum FolderType {
+  USER = 'USER',
+  ADMIN = 'ADMIN'
+}
+
+export enum FolderVisibility {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+  SELECTIVE = 'SELECTIVE'
+}
+
+export interface TaskFolder {
+  id: string;
+  name: string;
+  type: FolderType;
+  ownerId: string;
+  visibility: FolderVisibility;
+  accessibleUserIds: string[]; // For SELECTIVE visibility
+  createdAt: string;
+}
+
+export interface ProjectTask {
+  id: string;
+  title: string;
+  description: string;
+  client: string;
+  assignedUserId: string;
+  collaboratorIds: string[];
+  folderId?: string;
+  startDate: string;
+  endDate: string;
+  timeEstimate: number; // In hours
+  status: ProjectTaskStatus;
+  priority: ProjectTaskPriority;
+  isCollaborative: boolean;
+  createdAt: string;
+}
