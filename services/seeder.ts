@@ -19,20 +19,31 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const seedDummyData = async () => {
     try {
-        console.log('Starting comprehensive seed process...');
+        console.log('Starting seed process with robust mapping...');
 
         // 1. Create Users
         const seededUsers: User[] = [];
         for (const userData of USERS_TO_SEED) {
-            const { data: existing } = await supabase
+            const { data: foundUsers, error: searchError } = await supabase
                 .from('app_users')
                 .select('*')
-                .eq('email', userData.email)
-                .single();
+                .eq('email', userData.email);
+
+            if (searchError) console.error(`Error searching for ${userData.email}:`, searchError);
+
+            const existing = foundUsers && foundUsers.length > 0 ? foundUsers[0] : null;
 
             if (existing) {
-                seededUsers.push(existing);
-                console.log(`User ${userData.name} already exists.`);
+                const mappedUser: User = {
+                    id: existing.id || existing.userId || generateId(),
+                    name: existing.name || existing.userName || userData.name,
+                    email: existing.email || userData.email,
+                    role: existing.role || userData.role,
+                    isActive: existing.isActive !== undefined ? existing.isActive : true,
+                    createdAt: existing.createdAt || existing.created_at || new Date().toISOString()
+                };
+                seededUsers.push(mappedUser);
+                console.log(`User found and mapped: ${mappedUser.name} (${mappedUser.id})`);
             } else {
                 const newUser: User = {
                     id: generateId(),
@@ -43,34 +54,43 @@ export const seedDummyData = async () => {
                     isActive: true,
                     createdAt: new Date().toISOString()
                 };
-                const { error } = await supabase.from('app_users').insert(newUser);
-                if (error) throw error;
-                seededUsers.push(newUser);
-                console.log(`Created user: ${userData.name}`);
+
+                const payload = {
+                    ...newUser,
+                    created_at: newUser.createdAt
+                };
+
+                const { error } = await supabase.from('app_users').insert(payload);
+                if (error) {
+                    console.error(`Failed to create user ${userData.name}:`, error);
+                } else {
+                    seededUsers.push(newUser);
+                    console.log(`Created new user: ${userData.name} (${newUser.id})`);
+                }
             }
         }
 
-        // 2. Create Folders for each user
+        // 2. Create Folders
         const seededFolders: TaskFolder[] = [];
         for (const user of seededUsers) {
             for (const folderName of FOLDER_NAMES) {
-                // Check if folder exists
                 const { data: existing } = await supabase
                     .from('task_folders')
                     .select('*')
                     .eq('owner_id', user.id)
                     .eq('name', folderName)
-                    .single();
+                    .limit(1);
 
-                if (existing) {
+                if (existing && existing.length > 0) {
+                    const f = existing[0];
                     seededFolders.push({
-                        id: (existing as any).id,
-                        name: (existing as any).name,
-                        type: (existing as any).type,
-                        ownerId: (existing as any).owner_id,
-                        visibility: (existing as any).visibility,
-                        accessibleUserIds: (existing as any).accessible_user_ids || [],
-                        createdAt: (existing as any).created_at
+                        id: f.id,
+                        name: f.name,
+                        type: f.type,
+                        ownerId: f.owner_id || f.ownerId,
+                        visibility: f.visibility,
+                        accessibleUserIds: f.accessible_user_ids || f.accessibleUserIds || [],
+                        createdAt: f.created_at || f.createdAt
                     });
                 } else {
                     const newFolder: TaskFolder = {
@@ -83,7 +103,6 @@ export const seedDummyData = async () => {
                         createdAt: new Date().toISOString()
                     };
 
-                    // Supabase schema uses snake_case
                     const payload = {
                         id: newFolder.id,
                         name: newFolder.name,
@@ -95,8 +114,7 @@ export const seedDummyData = async () => {
                     };
 
                     const { error } = await supabase.from('task_folders').insert(payload);
-                    if (error) console.error('Error creating folder:', error);
-                    else seededFolders.push(newFolder);
+                    if (!error) seededFolders.push(newFolder);
                 }
             }
         }
@@ -105,7 +123,6 @@ export const seedDummyData = async () => {
         const seededTasks: ProjectTask[] = [];
         for (const user of seededUsers) {
             const userFolders = seededFolders.filter(f => f.ownerId === user.id);
-
             for (let i = 0; i < 5; i++) {
                 const folder = userFolders[Math.floor(Math.random() * userFolders.length)];
                 const client = CLIENTS[Math.floor(Math.random() * CLIENTS.length)];
@@ -118,21 +135,20 @@ export const seedDummyData = async () => {
                 const newTask: ProjectTask = {
                     id: generateId(),
                     title: `${client} Task ${i + 1} for ${user.name.split(' ')[0]}`,
-                    description: `Detailed description for ${client} task ${i + 1}. This involves various sub-tasks and milestones.`,
+                    description: `Task for ${client}.`,
                     client: client,
                     assignedUserId: user.id,
                     collaboratorIds: collaborators,
                     folderId: folder?.id,
                     startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
                     endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                    timeEstimate: Math.floor(Math.random() * 20) + 5,
-                    status: i % 3 === 0 ? ProjectTaskStatus.COMPLETED : ProjectTaskStatus.IN_PROGRESS,
-                    priority: i % 2 === 0 ? ProjectTaskPriority.HIGH : ProjectTaskPriority.MEDIUM,
+                    timeEstimate: 10,
+                    status: ProjectTaskStatus.IN_PROGRESS,
+                    priority: ProjectTaskPriority.MEDIUM,
                     isCollaborative: isCollaborative,
                     createdAt: new Date().toISOString()
                 };
 
-                // Supabase schema uses snake_case
                 const payload = {
                     id: newTask.id,
                     title: newTask.title,
@@ -151,55 +167,11 @@ export const seedDummyData = async () => {
                 };
 
                 const { error } = await supabase.from('project_tasks').insert(payload);
-                if (error) console.error('Error creating task:', error);
-                else seededTasks.push(newTask);
+                if (!error) seededTasks.push(newTask);
             }
         }
 
-        // 4. Create Collaborative Tasks (Cross-team)
-        const collaborativeTasks = [
-            { title: 'Weekly All-Hands Preparation', client: 'Internal', collaborators: seededUsers.slice(0, 4).map(u => u.id) },
-            { title: 'Main Client Q1 Strategy', client: 'Myntmore', collaborators: [seededUsers[0].id, seededUsers[1].id, seededUsers[2].id] },
-            { title: 'New Service Line Brainstorming', client: 'GrowthOps', collaborators: seededUsers.slice(4).map(u => u.id) },
-        ];
-
-        for (const colTask of collaborativeTasks) {
-            const newTask: ProjectTask = {
-                id: generateId(),
-                title: colTask.title,
-                description: `Collaborative effort on ${colTask.title}`,
-                client: colTask.client,
-                assignedUserId: colTask.collaborators[0],
-                collaboratorIds: colTask.collaborators.slice(1),
-                startDate: new Date().toISOString(),
-                endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-                timeEstimate: 40,
-                status: ProjectTaskStatus.IN_PROGRESS,
-                priority: ProjectTaskPriority.HIGH,
-                isCollaborative: true,
-                createdAt: new Date().toISOString()
-            };
-
-            const payload = {
-                id: newTask.id,
-                title: newTask.title,
-                description: newTask.description,
-                client: newTask.client,
-                assigned_user_id: newTask.assignedUserId,
-                collaborator_ids: newTask.collaboratorIds,
-                start_date: newTask.startDate,
-                end_date: newTask.endDate,
-                time_estimate: newTask.timeEstimate,
-                status: newTask.status,
-                priority: newTask.priority,
-                is_collaborative: newTask.isCollaborative,
-                created_at: newTask.createdAt
-            };
-
-            await supabase.from('project_tasks').insert(payload);
-        }
-
-        // 5. Create Daily Updates for the last 5 days
+        // 4. Create Daily Updates
         const today = new Date();
         for (let d = 1; d <= 5; d++) {
             const date = new Date(today);
@@ -207,36 +179,39 @@ export const seedDummyData = async () => {
             const dateStr = date.toISOString().split('T')[0];
 
             for (const user of seededUsers) {
-                // Check if update exists
                 const { data: existing } = await supabase
                     .from('daily_updates')
                     .select('id')
                     .eq('userId', user.id)
                     .eq('date', dateStr);
 
-                if (existing && existing.length > 0) continue;
+                if (foundUsers && foundUsers.length > 0) {
+                    // Check if ANY record exists for this date/user
+                    const { data: check } = await supabase.from('daily_updates').select('id').eq('userId', user.id).eq('date', dateStr).limit(1);
+                    if (check && check.length > 0) continue;
+                }
 
                 const userTasks = seededTasks.filter(t => t.assignedUserId === user.id || t.collaboratorIds.includes(user.id));
                 const dailyTasks = userTasks.slice(0, 3).map(t => ({
                     id: generateId(),
                     description: `Worked on ${t.title}`,
-                    timeSpent: 2 + Math.random() * 2,
-                    category: Math.random() > 0.5 ? TaskCategory.HPA : TaskCategory.CTA,
+                    timeSpent: 3,
+                    category: TaskCategory.HPA,
                     projectTaskId: t.id
                 }));
 
                 const totalTime = dailyTasks.reduce((sum, t) => sum + t.timeSpent, 0);
 
-                const updatePayload: DailyWorkUpdate = {
+                const updatePayload = {
                     id: generateId(),
                     userId: user.id,
                     userName: user.name,
                     date: dateStr,
                     month: dateStr.substring(0, 7),
                     tasks: dailyTasks,
-                    missedTasks: [{ id: generateId(), description: 'Follow up emails', reason: 'Focus on project work', projectTaskId: undefined }],
-                    blockers: Math.random() > 0.7 ? [{ id: generateId(), description: 'Waiting for client feedback', reason: 'Email sent on Monday' }] : [],
-                    productivityScore: 7 + Math.floor(Math.random() * 3),
+                    missedTasks: [],
+                    blockers: [],
+                    productivityScore: 8,
                     totalTime: totalTime,
                     submittedAt: new Date().toISOString()
                 };
@@ -246,7 +221,7 @@ export const seedDummyData = async () => {
             }
         }
 
-        alert('Comprehensive dummy data seeding complete for 8 users!');
+        alert('Seeding complete! Please refresh.');
         return true;
 
     } catch (err) {

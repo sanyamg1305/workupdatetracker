@@ -69,18 +69,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, updates, onGener
           <p className="text-gray-500 mt-2">Operational overview for {selectedMonth}</p>
         </div>
         <div className="flex items-center space-x-4">
-          <button
-            onClick={async () => {
-              if (window.confirm('Seed dummy data for Sanyam Golechha?')) {
-                const { seedDummyData } = await import('../services/seeder');
-                await seedDummyData();
-                window.location.reload();
-              }
-            }}
-            className="px-4 py-3 bg-gray-800 text-gray-300 text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-colors"
-          >
-            Seed Dummy Data
-          </button>
           <div className="w-48">
             <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Select Month</label>
             <input
