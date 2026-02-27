@@ -64,9 +64,9 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
     const completedTasks = filteredTasks.filter(t => t.status === ProjectTaskStatus.COMPLETED);
 
     return (
-        <div className="flex h-[calc(100vh-12rem)] bg-bg border border-border">
-            {/* Sidebar - Folders */}
-            <div className="w-64 border-r border-border flex flex-col">
+        <div className="flex flex-col md:flex-row h-auto md:h-[calc(100vh-12rem)] bg-bg border border-border overflow-hidden">
+            {/* Sidebar - Folders (Desktop) */}
+            <div className="hidden md:flex w-64 border-r border-border flex-col">
                 <div className="p-4 border-b border-border flex justify-between items-center">
                     <h3 className="text-[10px] uppercase font-black tracking-widest text-gray-500">Folders</h3>
                     <button
@@ -100,6 +100,45 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
                         >
                             <span>{folder.name}</span>
                             {folder.visibility === FolderVisibility.PRIVATE && <Icons.Shield />}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Mobile Horizontal Folder Navigation */}
+            <div className="md:hidden border-b border-border bg-muted/30 px-2 py-3">
+                <div className="flex items-center justify-between mb-3 px-2">
+                    <h3 className="text-[8px] uppercase font-black tracking-[0.2em] text-gray-500">Navigation</h3>
+                    <button
+                        onClick={() => setIsFolderModalOpen(true)}
+                        className="text-accent text-xs p-1"
+                    >
+                        <Icons.Plus />
+                    </button>
+                </div>
+                <div className="flex overflow-x-auto pb-2 -mx-2 px-2 space-x-2 no-scrollbar scroll-smooth">
+                    <button
+                        onClick={() => { setActiveFolderId(null); setView('MY_TASKS'); }}
+                        className={`whitespace-nowrap px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all ${!activeFolderId && view === 'MY_TASKS' ? 'bg-accent border-accent text-black' : 'border-border text-gray-400'}`}
+                    >
+                        My Tasks
+                    </button>
+                    {user.role === UserRole.ADMIN && (
+                        <button
+                            onClick={() => { setActiveFolderId(null); setView('ADMIN'); }}
+                            className={`whitespace-nowrap px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all ${!activeFolderId && view === 'ADMIN' ? 'bg-white border-white text-black' : 'border-border text-gray-400'}`}
+                        >
+                            Admin
+                        </button>
+                    )}
+                    {folders.map(folder => (
+                        <button
+                            key={folder.id}
+                            onClick={() => { setActiveFolderId(folder.id); setView('FOLDER'); }}
+                            className={`whitespace-nowrap px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-2 ${activeFolderId === folder.id ? 'bg-white border-white text-black' : 'border-border text-gray-400'}`}
+                        >
+                            {folder.name}
+                            {folder.visibility === FolderVisibility.PRIVATE && <Icons.Shield className="w-3 h-3" />}
                         </button>
                     ))}
                 </div>
@@ -485,54 +524,54 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                     <Icons.Check />
                 </button>
 
-                <div className="flex-1">
-                    <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className={`text-[8px] font-black px-2 py-0.5 uppercase tracking-widest border ${task.priority === ProjectTaskPriority.HIGH ? 'bg-red-500/10 border-red-500 text-red-500' :
+                <div className="flex-1 min-w-0">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
+                        <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                                <span className={`text-[7px] md:text-[8px] font-black px-2 py-0.5 uppercase tracking-widest border ${task.priority === ProjectTaskPriority.HIGH ? 'bg-red-500/10 border-red-500 text-red-500' :
                                     task.priority === ProjectTaskPriority.MEDIUM ? 'bg-accent/10 border-accent text-accent' :
                                         'bg-gray-500/10 border-gray-500 text-gray-500'
                                     }`}>
                                     {task.priority}
                                 </span>
-                                <span className="text-[8px] font-black px-2 py-0.5 uppercase tracking-widest border border-border bg-bg text-gray-400">
+                                <span className="text-[7px] md:text-[8px] font-black px-2 py-0.5 uppercase tracking-widest border border-border bg-bg text-gray-400 truncate max-w-[100px]">
                                     {task.client}
                                 </span>
                                 {task.isCollaborative && (
-                                    <span className="text-[8px] font-black px-2 py-0.5 uppercase tracking-widest border border-accent/30 bg-accent/5 text-accent flex items-center gap-1">
-                                        <Icons.Shield /> COLLABORATIVE
+                                    <span className="text-[7px] md:text-[8px] font-black px-2 py-0.5 uppercase tracking-widest border border-accent/30 bg-accent/5 text-accent flex items-center gap-1">
+                                        <Icons.Shield className="w-2 h-2" /> COLLAB
                                     </span>
                                 )}
                             </div>
-                            <h4 className={`text-lg font-black uppercase leading-tight group-hover:text-accent transition-colors ${isCompleted ? 'line-through text-gray-500' : ''}`}>{task.title}</h4>
-                            <p className="text-xs text-gray-500 mt-2 line-clamp-2 max-w-2xl">{task.description}</p>
+                            <h4 className={`text-base md:text-lg font-black uppercase leading-tight group-hover:text-accent transition-colors break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>{task.title}</h4>
+                            <p className="text-[11px] md:text-xs text-gray-500 mt-2 line-clamp-2 max-w-full">{task.description}</p>
                         </div>
-                        <div className="text-right">
+                        <div className="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between md:justify-start gap-3">
                             <select
                                 value={task.status}
                                 onChange={(e) => {
                                     const newStatus = e.target.value as ProjectTaskStatus;
                                     storageService.saveTask({ ...task, status: newStatus }).then(onRefresh);
                                 }}
-                                className="bg-bg border border-border text-[10px] font-black uppercase tracking-widest p-2 outline-none focus:border-accent transition-colors"
+                                className="bg-bg border border-border text-[9px] md:text-[10px] font-black uppercase tracking-widest p-2 outline-none focus:border-accent transition-colors flex-1 md:flex-none"
                             >
                                 <option value={ProjectTaskStatus.NOT_STARTED}>Not Started</option>
                                 <option value={ProjectTaskStatus.IN_PROGRESS}>In Progress</option>
                                 <option value={ProjectTaskStatus.COMPLETED}>Completed</option>
                             </select>
-                            <div className="mt-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                {task.timeEstimate}h Estimated
+                            <div className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">
+                                {task.timeEstimate}h Est.
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex justify-between items-center pt-4 border-t border-border/50">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t border-border/50">
                         <div className="flex items-center gap-4">
                             <div className="flex items-center">
                                 <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[8px] font-black text-black">
                                     {users.find((u: any) => u.id === task.assignedUserId)?.name.charAt(0)}
                                 </div>
-                                <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase">{users.find((u: any) => u.id === task.assignedUserId)?.name}</span>
+                                <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase truncate max-w-[80px]">{users.find((u: any) => u.id === task.assignedUserId)?.name}</span>
                             </div>
                             {task.collaboratorIds.length > 0 && (
                                 <div className="flex -space-x-2">
@@ -544,10 +583,12 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                                 </div>
                             )}
                         </div>
-                        <div className="flex items-center gap-3">
-                            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">
-                                Deadline: {new Date(task.endDate).toLocaleDateString()}
-                            </span>
+
+                        <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+                            <div className="flex items-center text-[10px] text-gray-500">
+                                <Icons.Calendar className="w-3 h-3 mr-1" />
+                                <span className="uppercase font-bold tracking-widest">{new Date(task.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                            </div>
                             {(user.id === task.assignedUserId || user.role === UserRole.ADMIN) && (
                                 <div className="flex gap-2">
                                     <button

@@ -151,12 +151,12 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
 
   return (
     <form onSubmit={handleSubmit} className="space-y-12 max-w-4xl mx-auto">
-      <div className="flex justify-between items-end border-b border-border pb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-border pb-6 gap-6">
         <div>
-          <h2 className="text-4xl font-black uppercase tracking-tighter">Daily Work Log</h2>
-          <p className="text-gray-500 mt-2">Log your impact for the day.</p>
+          <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter">Daily Work Log</h2>
+          <p className="text-gray-500 mt-2 text-sm md:text-base">Log your impact for the day.</p>
         </div>
-        <div className="w-48">
+        <div className="w-full md:w-48">
           <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Date</label>
           <input
             type="date"
@@ -186,8 +186,8 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
 
         <div className="space-y-4">
           {tasks.map((task, idx) => (
-            <div key={task.id} className="grid grid-cols-12 gap-4 items-start p-4 bg-muted border border-border">
-              <div className="col-span-12 md:col-span-5">
+            <div key={task.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start p-4 bg-muted border border-border">
+              <div className="md:col-span-12 lg:col-span-5">
                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Select Task Source</label>
                 <select
                   value={task.projectTaskId || (task.description ? 'custom' : '')}
@@ -247,7 +247,7 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                   />
                 </div>
               </div>
-              <div className="col-span-6 md:col-span-3">
+              <div className="md:col-span-3">
                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Category</label>
                 <select
                   value={task.category}
@@ -260,7 +260,7 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                   ))}
                 </select>
               </div>
-              <div className="col-span-12 md:col-span-1 flex items-end justify-end h-full pt-4">
+              <div className="md:col-span-1 flex items-end justify-end h-full pt-4">
                 <button
                   type="button"
                   onClick={() => removeTask(task.id)}
@@ -300,8 +300,8 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
 
         <div className="space-y-4">
           {missedTasks.map((m) => (
-            <div key={m.id} className="grid grid-cols-12 gap-4 items-start p-4 bg-muted/50 border border-border border-dashed">
-              <div className="col-span-12 md:col-span-6">
+            <div key={m.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start p-4 bg-muted/50 border border-border border-dashed">
+              <div className="md:col-span-6">
                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Missed Task Source</label>
                 <select
                   value={m.projectTaskId || (m.description ? 'custom' : '')}
@@ -331,7 +331,7 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                   </div>
                 )}
               </div>
-              <div className="col-span-11 md:col-span-5 pt-5">
+              <div className="md:col-span-5 pt-0 md:pt-5">
                 <input
                   type="text"
                   placeholder="Why was it missed?"
@@ -368,8 +368,8 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
 
         <div className="space-y-4">
           {blockers.map((b) => (
-            <div key={b.id} className="grid grid-cols-12 gap-4 items-start p-4 bg-muted/50 border border-border border-dashed">
-              <div className="col-span-12 md:col-span-6">
+            <div key={b.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start p-4 bg-muted/50 border border-border border-dashed">
+              <div className="md:col-span-6">
                 <input
                   type="text"
                   placeholder="Description of the blocker"
@@ -378,7 +378,7 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                   className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-sm"
                 />
               </div>
-              <div className="col-span-11 md:col-span-5">
+              <div className="md:col-span-5">
                 <input
                   type="text"
                   placeholder="Root cause"

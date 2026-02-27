@@ -112,7 +112,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, updates, onGener
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-border text-[10px] uppercase tracking-widest text-gray-500">
@@ -154,6 +154,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, updates, onGener
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile-only Card View */}
+      <div className="md:hidden space-y-4">
+        {stats.map((stat) => (
+          <div key={stat.userId} className="bg-muted p-4 border border-border space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="font-bold text-lg text-white">{stat.name}</p>
+                <p className="text-[10px] uppercase text-gray-500 font-bold tracking-widest">
+                  {stat.updatesSubmitted} Updates this month
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-black text-accent">{stat.totalHours.toFixed(1)}h</p>
+                <p className={`text-[10px] font-black uppercase ${stat.avgProductivity > 7 ? 'text-green-500' : stat.avgProductivity < 4 ? 'text-red-500' : 'text-accent'}`}>
+                  Score: {stat.avgProductivity.toFixed(1)}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleGenerateReport(stat.userId, stat.name)}
+                className="w-full py-3 bg-accent text-black text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center"
+              >
+                AI Report
+              </button>
+              <button
+                onClick={() => setViewLogsUserId(stat.userId)}
+                className="w-full py-3 border border-border text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center justify-center"
+              >
+                View Logs
+              </button>
+            </div>
+          </div>
+        ))}
+        {stats.length === 0 && (
+          <div className="py-10 text-center border border-dashed border-border">
+            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">No stats available</p>
+          </div>
+        )}
       </div>
 
       {reportState.isOpen && (

@@ -11,7 +11,7 @@ interface LogViewerProps {
 const LogViewer: React.FC<LogViewerProps> = ({ updates, userName, onClose }) => {
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
-            <div className="bg-bg border border-border w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="bg-bg border border-border w-full max-w-4xl max-h-[100vh] md:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
                 <div className="p-6 border-b border-border flex justify-between items-center bg-muted">
                     <div>
                         <h3 className="text-xl font-black uppercase text-white">Work Logs</h3>
@@ -48,10 +48,10 @@ const LogViewer: React.FC<LogViewerProps> = ({ updates, userName, onClose }) => 
                                             <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-bold">Completed Tasks</p>
                                             <ul className="space-y-2">
                                                 {log.tasks.map(t => (
-                                                    <li key={t.id} className="flex justify-between items-start text-sm border-l-2 border-accent pl-3 py-1 bg-bg/50">
+                                                    <li key={t.id} className="flex flex-col sm:flex-row justify-between items-start text-sm border-l-2 border-accent pl-3 py-2 bg-bg/50 gap-2">
                                                         <span className="text-gray-300">{t.description}</span>
-                                                        <div className="flex items-center space-x-2 ml-4 shrink-0">
-                                                            <span className="text-[10px] uppercase font-bold text-gray-500">{t.category}</span>
+                                                        <div className="flex items-center space-x-2 shrink-0">
+                                                            <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-500">{t.category}</span>
                                                             <span className="font-mono text-xs font-bold text-white">{t.timeSpent}h</span>
                                                         </div>
                                                     </li>

@@ -172,7 +172,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ content, userName, month, i
               </div>
 
               {/* AI Analysis Section */}
-              <div className="prose prose-invert prose-sm max-w-none 
+              <div className="prose prose-invert prose-sm max-w-none overflow-x-auto
                 prose-headings:text-white 
                 prose-headings:uppercase 
                 prose-headings:tracking-widest 

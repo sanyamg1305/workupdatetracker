@@ -174,7 +174,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onAddUser, onUpd
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-border text-[10px] uppercase tracking-widest text-gray-500">
@@ -235,6 +235,60 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onAddUser, onUpd
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile-only Personnel Cards */}
+      <div className="md:hidden space-y-4">
+        {users.map((user) => (
+          <div key={user.id} className="bg-muted p-5 border border-border space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="font-bold text-lg text-white">{user.name}</p>
+                <p className="text-xs text-gray-500">{user.email}</p>
+                {user.jobRole && (
+                  <p className="text-[10px] uppercase font-bold text-accent mt-1 tracking-widest">{user.jobRole}</p>
+                )}
+              </div>
+              <div className="inline-block px-2 py-0.5 border border-gray-700 text-[10px] font-bold uppercase text-gray-400 tracking-tighter">
+                {user.role}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs py-2 border-y border-border/50">
+              <span className="text-gray-500 uppercase tracking-widest font-bold">Status</span>
+              <span className={user.isActive ? 'text-green-500' : 'text-red-500 font-bold'}>
+                {user.isActive ? 'Active' : 'Disabled'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              <button
+                onClick={() => setEditingUser(user)}
+                className="py-3 bg-gray-800 text-[10px] uppercase font-black tracking-widest text-accent hover:bg-white hover:text-black transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => onUpdateUser({ ...user, isActive: !user.isActive })}
+                className="py-3 bg-gray-800 text-[10px] uppercase font-black tracking-widest text-gray-400 hover:bg-white hover:text-black transition-colors"
+              >
+                {user.isActive ? 'Disable' : 'Enable'}
+              </button>
+              {user.email !== 'founder@myntmore.com' ? (
+                <button
+                  onClick={() => onDeleteUser(user.id)}
+                  className="py-3 bg-gray-800 text-[10px] uppercase font-black tracking-widest text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                >
+                  Delete
+                </button>
+              ) : (
+                <div className="py-3 bg-gray-900 text-[10px] uppercase font-black tracking-widest text-gray-700 text-center cursor-not-allowed">
+                  Locked
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
