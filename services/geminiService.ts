@@ -33,90 +33,76 @@ export const generateMonthlyReport = async (updates: DailyWorkUpdate[], userName
 
   const prompt = `
 ROLE
-You are an elite operations analyst AI.
-Your job is to analyze structured work log data and produce a founder-level operational intelligence report, not a descriptive summary.
-Avoid fluff or generic productivity advice.
-Be sharp, analytical, and decisive.
-Write like a Chief of Staff briefing a founder.
+You are a "Visual Intelligence Specialist" AI.
+Your ONLY goal is to produce a high-impact, visual-first executive dashboard.
+NO LONG PARAGRAPHS. NO FLUFF. NO GENERIC ADVICE.
 
-PRIMARY OBJECTIVE
-Turn raw work updates into decision-support insight.
-The founder should be able to read this report in under 3 minutes and immediately understand:
-- Where time is going
-- What is wasting capacity
-- What is driving impact
-- Where intervention is needed
+CORE DIRECTIVE: VISUALS OVER TEXT
+1. MANDATORY TABLES: Use Markdown tables for ANY data comparison or list.
+2. STRICT LIMITS: Max 1 sentence per insight.
+3. CLEAR SEPARATION: Use horizontal rules (---) between ALL major sections.
+4. PREMIUM FORMATTING: Use bolding for impact. Use emojis sparingly but effectively.
 
-INPUT DATA
-You will receive a month of daily work updates containing:
-Tasks, Time spent, Task category (HPA, CTA, LPA), Missed tasks + reasons, Blockers + reasons, Productivity scores
+INPUT DATA:
+- Period: ${month}
+- Team Member: ${userName}
+- Raw Data: ${JSON.stringify(dataSummary)}
+- Reference Tasks: ${JSON.stringify(projectTasksReference)}
 
-TARGET USER: ${userName}
-PERIOD: ${month}
-DATA: ${JSON.stringify(dataSummary, null, 2)}
-PROJECT_TASKS_REFERENCE: ${JSON.stringify(projectTasksReference, null, 2)}
+---
 
-⚠️ CRITICAL STEP — TASK NORMALIZATION
-Before ANY analysis:
-You MUST semantically group similar tasks.
-Users may write the same task differently.
-Normalization Rules:
-- Group by intent, not wording.
-- Merge synonyms automatically.
-- Create a clean normalized task label.
-- Do this FIRST internally to inform the analysis.
-
-REPORT STRUCTURE (MANDATORY)
-Follow this exact order. Use Markdown headers (##, ###) and **FULLY FORMATTED MARKDOWN TABLES** for sections 2 and 3.
-
-1️⃣ EXECUTIVE SUMMARY
-Provide a concise intelligence grid using a bullet list.
-- **Primary Time Sink:** [Task Name]
-- **Resource Alignment:** [Healthy/Concerning]
-- **Operational Drag:** [Low/Medium/High]
-- **Productivity Trend:** [Improving/Stable/Declining]
-- **Top Recommendation:** [One sentence, high-impact]
-
-2️⃣ TIME ALLOCATION BREAKDOWN
-You MUST use a Markdown table. This is non-negotiable.
-| Category | Hours | % of Month | Pulse/Signal |
-| :--- | :--- | :--- | :--- |
-| HPA (High Priority) | Xh | X% | [Specific comment] |
-| CTA (Core Task) | Xh | X% | [Specific comment] |
-| LPA (Low Priority) | Xh | X% | [Direct feedback] |
-
-3️⃣ TOP 5 TIME-CONSUMING TASKS
-You MUST use a Markdown table.
-| Normalized Task | Hours | Operator Signal |
+1️⃣ EXECUTIVE SUMMARY (KPIS)
+| Metric | Status | Primary Insight |
 | :--- | :--- | :--- |
-| [Task Name] | Xh | [Candidate for delegation/automation/keep] |
+| **Main Time Sink** | [Task Name] | [1 sentence on impact] |
+| **Capacity Type** | [Under/Optimal/Over] | [1 sentence evidence] |
+| **Focus Quality** | [High/Mid/Low] | [1 sentence HPA ratio comment] |
+| **Operational Drag** | [Low/High] | [1 sentence on inhibitors] |
 
-For EACH task, provide a brief bullet on **Risk** if continued in current form.
+---
 
-3.5️⃣ EFFICIENCY DELTA & ESTIMATE ACCURACY 📉
-Analyze the projectTasks and compare estimates to actuals.
-- Identify tasks where the user consistently over-estimates or under-estimates.
-- Highlight specific project tasks that blew past estimates.
-- Provide a "Planning Compliance Score" (0-100%).
+2️⃣ MONTHLY CAPACITY DIAGNOSIS
+| Category | Growth Hours (HPA) | Core Hours (CTA) | Admin/Drag (LPA) | Total Output |
+| :--- | :--- | :--- | :--- | :--- |
+| **Allocation** | Xh | Xh | Xh | Xh |
+| **% Mix** | X% | X% | X% | 100% |
 
-4️⃣ PRODUCTIVITY INTELLIGENCE
-Look for patterns and correlations.
-- **Correlation:** [Analysis]
-- **Blocker Impact:** [Analysis]
+> [!NOTE]
+> Insight: [Exactly one punchy sentence about the time mix]
 
-5️⃣ RECURRING MISSED TASKS & BLOCKERS
-Cluster inhibitors into structural, leadership, or tool-related issues.
+---
 
-6️⃣ CAPACITY DIAGNOSIS 📊
-State clearly: **Underutilized, Optimally utilized, Overloaded, or Misallocated**.
+3️⃣ TASK EFFICIENCY & PLANNING PRECISION
+| Top 5 Critical Tasks | Actual Time | Planning Delta | Operator Verdict |
+| :--- | :--- | :--- | :--- |
+| [Task] | Xh | [+/- Xh] | [Delegate/Optimize/Keep] |
 
-7️⃣ RISK FLAGS 🚨
-Direct, unvarnished callouts of operational dangers.
+**Planning Compliance Score:** [0-100%]
+*Insight:* [1 sentence on where estimation logic is failing]
 
-8️⃣ HIGH-IMPACT RECOMMENDATIONS (Max 5)
+---
 
-OUTPUT TONE
-Sharp. Decisive. Premium. Use bolding for emphasis. Ensure tables are perfectly formatted with header separators.
+4️⃣ INHIBITOR CLUSTERING (MISSED & BLOCKERS)
+| Category | Instances | Root Cause | Structural Risk |
+| :--- | :--- | :--- | :--- |
+| [Task/Missed] | [count] | [1 sentence cause] | [Low/Mid/High] |
+
+---
+
+5️⃣ STRATEGIC CALLOUTS 🚨
+- **[Callout 1]:** [Max 15 words]
+- **[Callout 2]:** [Max 15 words]
+
+---
+
+6️⃣ HIGH-IMPACT LEVERS (TOP 3 ONLY)
+1. **[Action]**: [Expected Outcome - Max 20 words]
+2. **[Action]**: [Expected Outcome - Max 20 words]
+3. **[Action]**: [Expected Outcome - Max 20 words]
+
+---
+
+TONE: Brutally honest, data-centric, high-agency.
 `;
 
   try {

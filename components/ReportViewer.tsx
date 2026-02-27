@@ -178,16 +178,21 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ content, userName, month, i
                 prose-headings:tracking-widest 
                 prose-headings:font-black 
                 prose-headings:border-b 
-                prose-headings:border-border/50 
+                prose-headings:border-border 
                 prose-headings:pb-3 
-                prose-headings:mt-12
+                prose-headings:mt-16
                 prose-p:text-gray-400 
                 prose-p:leading-relaxed
+                prose-p:text-xs
                 prose-strong:text-accent
                 prose-li:text-gray-300 
                 prose-table:w-full
-                prose-th:bg-muted/50 prose-th:text-accent prose-th:text-[10px] prose-th:uppercase prose-th:tracking-widest prose-th:p-4
-                prose-td:p-4 prose-td:border-b prose-td:border-border/30
+                prose-table:border-collapse
+                prose-table:border
+                prose-table:border-border/50
+                prose-th:bg-muted prose-th:text-accent prose-th:text-[9px] prose-th:uppercase prose-th:tracking-widest prose-th:p-3 prose-th:border prose-th:border-border/50
+                prose-td:p-3 prose-td:border prose-td:border-border/30 prose-td:text-[11px]
+                prose-hr:border-border prose-hr:my-12
                 font-inter
                 print:prose-headings:text-black print:prose-headings:border-black/20 print:prose-p:text-black print:prose-li:text-black print:text-black">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
