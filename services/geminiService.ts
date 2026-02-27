@@ -1,10 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { DailyWorkUpdate } from "../types";
+import { DailyWorkUpdate, ProjectTask } from "../types";
 
 // User provided API Key via environment variable
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-export const generateMonthlyReport = async (updates: DailyWorkUpdate[], userName: string, month: string) => {
+export const generateMonthlyReport = async (updates: DailyWorkUpdate[], userName: string, month: string, projectTasksReference: ProjectTask[] = []) => {
   if (!API_KEY) {
     console.error("Missing VITE_GEMINI_API_KEY in environment variables");
     throw new Error("Missing Gemini API Key. Please check your environment configuration.");
@@ -20,9 +20,14 @@ export const generateMonthlyReport = async (updates: DailyWorkUpdate[], userName
     tasks: u.tasks.map(t => ({
       description: t.description,
       time: t.timeSpent,
-      category: t.category
+      category: t.category,
+      projectTaskId: t.projectTaskId
     })),
-    missed: u.missedTasks.map(m => ({ description: m.description, reason: m.reason })),
+    missed: u.missedTasks.map(m => ({
+      description: m.description,
+      reason: m.reason,
+      projectTaskId: m.projectTaskId
+    })),
     blockers: u.blockers.map(b => ({ description: b.description, reason: b.reason }))
   }));
 
@@ -49,6 +54,7 @@ Tasks, Time spent, Task category (HPA, CTA, LPA), Missed tasks + reasons, Blocke
 TARGET USER: ${userName}
 PERIOD: ${month}
 DATA: ${JSON.stringify(dataSummary, null, 2)}
+PROJECT_TASKS_REFERENCE: ${JSON.stringify(projectTasksReference, null, 2)}
 
 ⚠️ CRITICAL STEP — TASK NORMALIZATION
 Before ANY analysis:
@@ -61,58 +67,56 @@ Normalization Rules:
 - Do this FIRST internally to inform the analysis.
 
 REPORT STRUCTURE (MANDATORY)
-Follow this exact order. Use Markdown headers (##, ###) and Tables where specified.
+Follow this exact order. Use Markdown headers (##, ###) and **FULLY FORMATTED MARKDOWN TABLES** for sections 2 and 3.
 
 1️⃣ EXECUTIVE SUMMARY
-Tell the founder what matters most in a concise grid or bullet list.
-- Primary Time Sink: [Task Name]
-- Resource Alignment: [Healthy/Concerning]
-- Operational Drag: [Low/Medium/High]
-- Productivity Trend: [Improving/Stable/Declining]
-- Top Recommendation: [One sentence]
+Provide a concise intelligence grid using a bullet list.
+- **Primary Time Sink:** [Task Name]
+- **Resource Alignment:** [Healthy/Concerning]
+- **Operational Drag:** [Low/Medium/High]
+- **Productivity Trend:** [Improving/Stable/Declining]
+- **Top Recommendation:** [One sentence, high-impact]
 
 2️⃣ TIME ALLOCATION BREAKDOWN
-Use a Markdown table to visualize allocation.
+You MUST use a Markdown table. This is non-negotiable.
 | Category | Hours | % of Month | Pulse/Signal |
 | :--- | :--- | :--- | :--- |
 | HPA (High Priority) | Xh | X% | [Specific comment] |
 | CTA (Core Task) | Xh | X% | [Specific comment] |
 | LPA (Low Priority) | Xh | X% | [Direct feedback] |
 
-Flag imbalances aggressively. Do NOT stay neutral.
-
 3️⃣ TOP 5 TIME-CONSUMING TASKS
-Use a Markdown table.
+You MUST use a Markdown table.
 | Normalized Task | Hours | Operator Signal |
 | :--- | :--- | :--- |
 | [Task Name] | Xh | [Candidate for delegation/automation/keep] |
 
-For EACH task, provide a brief bullet on Risk if continued.
+For EACH task, provide a brief bullet on **Risk** if continued in current form.
+
+3.5️⃣ EFFICIENCY DELTA & ESTIMATE ACCURACY 📉
+Analyze the projectTasks and compare estimates to actuals.
+- Identify tasks where the user consistently over-estimates or under-estimates.
+- Highlight specific project tasks that blew past estimates.
+- Provide a "Planning Compliance Score" (0-100%).
 
 4️⃣ PRODUCTIVITY INTELLIGENCE
-Look for patterns (e.g., productivity drop on LPA-heavy days).
-Use bold text for key insights.
-- **Correlation:** [e.g., High LPA days lead to 15% lower scores]
-- **Blocker Impact:** [Analysis of how blockers affected output]
+Look for patterns and correlations.
+- **Correlation:** [Analysis]
+- **Blocker Impact:** [Analysis]
 
 5️⃣ RECURRING MISSED TASKS & BLOCKERS
-Identify clusters and patterns using bullets. Identify if blockers are structural, leadership, or tool-related.
+Cluster inhibitors into structural, leadership, or tool-related issues.
 
 6️⃣ CAPACITY DIAGNOSIS 📊
-State clearly if this person is: **Underutilized, Optimally utilized, Overloaded, or Misallocated**.
-Explain WHY with specific data points.
+State clearly: **Underutilized, Optimally utilized, Overloaded, or Misallocated**.
 
 7️⃣ RISK FLAGS 🚨
-Call out operational dangers (Admin creep, Strategy starvation, Execution bottlenecks).
-Be direct. Do not soften language.
+Direct, unvarnished callouts of operational dangers.
 
 8️⃣ HIGH-IMPACT RECOMMENDATIONS (Max 5)
-Must be specific and operator-level.
-Example: *Automate lead cleanup — currently consuming 11% of monthly capacity.*
 
 OUTPUT TONE
-Concise. Intelligent. Hard-hitting. Use emojis sparingly for visual cues (e.g., 🚨, 📊, ✅, ⚠️).
-Clarity > Politeness.
+Sharp. Decisive. Premium. Use bolding for emphasis. Ensure tables are perfectly formatted with header separators.
 `;
 
   try {

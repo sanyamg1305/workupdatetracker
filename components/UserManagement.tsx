@@ -69,7 +69,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onAddUser, onUpd
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Pass</label>
+              <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Password</label>
               <input
                 type="text"
                 required

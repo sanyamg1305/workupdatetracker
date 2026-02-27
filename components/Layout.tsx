@@ -23,10 +23,10 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children, activeTab, on
             <img src={logo} alt={APP_NAME} className="h-10 w-auto" />
 
             {user && (
-              <nav className="hidden md:flex items-center space-x-1">
+              <nav className="flex items-center space-x-1">
                 <button
                   onClick={() => onTabChange?.('dashboard')}
-                  className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${activeTab === 'dashboard' ? 'text-accent bg-muted' : 'text-primary hover:bg-muted'
+                  className={`px-3 md:px-4 py-2 text-[10px] md:text-sm font-semibold rounded-md transition-colors ${activeTab === 'dashboard' ? 'text-accent bg-muted' : 'text-primary hover:bg-muted'
                     }`}
                 >
                   Dashboard
@@ -35,18 +35,18 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children, activeTab, on
                 {user.role === UserRole.ADMIN && (
                   <button
                     onClick={() => onTabChange?.('users')}
-                    className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${activeTab === 'users' ? 'text-accent bg-muted' : 'text-primary hover:bg-muted'
+                    className={`px-3 md:px-4 py-2 text-[10px] md:text-sm font-semibold rounded-md transition-colors ${activeTab === 'users' ? 'text-accent bg-muted' : 'text-primary hover:bg-muted'
                       }`}
                   >
-                    User Management
+                    Users
                   </button>
                 )}
                 <button
                   onClick={() => onTabChange?.('tasks')}
-                  className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${activeTab === 'tasks' ? 'text-accent bg-muted' : 'text-primary hover:bg-muted'
+                  className={`px-3 md:px-4 py-2 text-[10px] md:text-sm font-semibold rounded-md transition-colors ${activeTab === 'tasks' ? 'text-accent bg-muted' : 'text-primary hover:bg-muted'
                     }`}
                 >
-                  Project Tasks
+                  Tasks
                 </button>
               </nav>
             )}

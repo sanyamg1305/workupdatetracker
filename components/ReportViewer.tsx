@@ -172,21 +172,23 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ content, userName, month, i
               </div>
 
               {/* AI Analysis Section */}
-              <div className="prose prose-invert max-w-none 
+              <div className="prose prose-invert prose-sm max-w-none 
                 prose-headings:text-white 
                 prose-headings:uppercase 
                 prose-headings:tracking-widest 
                 prose-headings:font-black 
                 prose-headings:border-b 
                 prose-headings:border-border/50 
-                prose-headings:pb-2 
+                prose-headings:pb-3 
                 prose-headings:mt-12
-                prose-p:text-gray-300 
+                prose-p:text-gray-400 
+                prose-p:leading-relaxed
+                prose-strong:text-accent
                 prose-li:text-gray-300 
-                prose-table:border-collapse 
-                prose-th:border-border prose-td:border-border
-                prose-th:p-4 prose-td:p-4
-                font-inter text-sm leading-relaxed
+                prose-table:w-full
+                prose-th:bg-muted/50 prose-th:text-accent prose-th:text-[10px] prose-th:uppercase prose-th:tracking-widest prose-th:p-4
+                prose-td:p-4 prose-td:border-b prose-td:border-border/30
+                font-inter
                 print:prose-headings:text-black print:prose-headings:border-black/20 print:prose-p:text-black print:prose-li:text-black print:text-black">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {content}

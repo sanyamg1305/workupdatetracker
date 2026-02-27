@@ -15,12 +15,14 @@ export interface Task {
   description: string;
   timeSpent: number;
   category: TaskCategory;
+  projectTaskId?: string;
 }
 
 export interface MissedTask {
   id: string;
   description: string;
   reason: string;
+  projectTaskId?: string;
 }
 
 export interface Blocker {

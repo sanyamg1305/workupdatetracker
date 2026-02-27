@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { AuthState, User, UserRole, DailyWorkUpdate } from './types';
+import { AuthState, User, UserRole, DailyWorkUpdate, ProjectTask } from './types';
 import { storageService } from './services/storageService';
 import { generateMonthlyReport } from './services/geminiService';
 import Layout from './components/Layout';
@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'logs' | 'tasks'>('dashboard');
   const [users, setUsers] = useState<User[]>([]);
   const [updates, setUpdates] = useState<DailyWorkUpdate[]>([]);
+  const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
   const [isNewUpdateOpen, setIsNewUpdateOpen] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [createAdminForm, setCreateAdminForm] = useState({ name: '', email: '', password: '' }); // New state for admin creation
@@ -34,10 +35,14 @@ const App: React.FC = () => {
   }, []);
 
   const refreshData = useCallback(async () => {
-    const fetchedUsers = await storageService.getUsers();
-    const fetchedUpdates = await storageService.getUpdates();
+    const [fetchedUsers, fetchedUpdates, fetchedTasks] = await Promise.all([
+      storageService.getUsers(),
+      storageService.getUpdates(),
+      storageService.getTasks()
+    ]);
     setUsers(fetchedUsers);
     setUpdates(fetchedUpdates);
+    setProjectTasks(fetchedTasks);
   }, []);
 
   // Handle Login
@@ -169,7 +174,7 @@ const App: React.FC = () => {
     if (!user || userUpdates.length === 0) {
       throw new Error("No data for this user in selected month.");
     }
-    return await generateMonthlyReport(userUpdates, user.name, month);
+    return await generateMonthlyReport(userUpdates, user.name, month, projectTasks);
   };
 
   const [loginView, setLoginView] = useState<'SELECT' | 'ADMIN' | 'TEAM'>('SELECT');

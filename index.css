@@ -1,0 +1,81 @@
+/* Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #FFFFFF;
+    --accent: #FFC947;
+    --bg: #000000;
+    --muted: #1A1A1A;
+    --border: #333333;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg);
+    color: var(--primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+/* Typography Overrides for Dark Mode Reports */
+.prose-invert {
+    --tw-prose-body: #d1d5db;
+    --tw-prose-headings: #ffffff;
+    --tw-prose-links: #FFC947;
+    --tw-prose-bold: #ffffff;
+    --tw-prose-counters: #9ca3af;
+    --tw-prose-bullets: #4b5563;
+    --tw-prose-hr: #374151;
+    --tw-prose-quotes: #f3f4f6;
+    --tw-prose-quote-borders: #FFC947;
+    --tw-prose-captions: #9ca3af;
+    --tw-prose-code: #ffffff;
+    --tw-prose-pre-code: #d1d5db;
+    --tw-prose-pre-bg: #111827;
+    --tw-prose-th-borders: #374151;
+    --tw-prose-td-borders: #1f2937;
+}
+
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.prose th {
+    background-color: rgba(255, 255, 255, 0.05);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #333;
+}
+
+.prose td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #222;
+}
+
+.prose tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}

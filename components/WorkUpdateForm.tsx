@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Icons, CATEGORY_LABELS } from '../constants';
-import { Task, MissedTask, Blocker, TaskCategory, DailyWorkUpdate, User, ProjectTask } from '../types';
+import { Task, MissedTask, Blocker, TaskCategory, DailyWorkUpdate, User, ProjectTask, ProjectTaskStatus } from '../types';
 import { storageService } from '../services/storageService';
 
 interface WorkUpdateFormProps {
@@ -24,7 +24,8 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
     timeSpent: 0,
     hours: 0,
     minutes: 0,
-    category: TaskCategory.HPA
+    category: TaskCategory.HPA,
+    projectTaskId: ''
   }]);
   const [missedTasks, setMissedTasks] = useState<MissedTask[]>([]);
   const [blockers, setBlockers] = useState<Blocker[]>([]);
@@ -47,7 +48,8 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
       timeSpent: 0,
       hours: 0,
       minutes: 0,
-      category: TaskCategory.HPA
+      category: TaskCategory.HPA,
+      projectTaskId: ''
     }]);
   };
 
@@ -69,27 +71,21 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
         updatedTask.timeSpent = h + (m / 60);
       }
 
+      // If selecting a project task, pre-fill description and category
+      if (field === 'projectTaskId' && value !== 'custom') {
+        const pt = projectTasks.find(p => p.id === value);
+        if (pt) {
+          updatedTask.description = `[${pt.client}] ${pt.title}`;
+          updatedTask.category = TaskCategory.HPA; // Default to HPA
+        }
+      }
+
       return updatedTask;
     }));
   };
 
-  const linkProjectTask = (taskId: string, targetId: string) => {
-    const pt = projectTasks.find(t => t.id === taskId);
-    if (!pt) return;
-
-    setTasks(tasks.map(t => {
-      if (t.id !== targetId) return t;
-      return {
-        ...t,
-        description: `[${pt.client}] ${pt.title}`,
-        category: TaskCategory.HPA // Default to HPA for linked tasks
-      };
-    }));
-  };
-
-  // ... (missed tasks and blockers logic remains the same)
   const addMissedTask = () => {
-    setMissedTasks([...missedTasks, { id: Math.random().toString(36).substr(2, 9), description: '', reason: '' }]);
+    setMissedTasks([...missedTasks, { id: Math.random().toString(36).substr(2, 9), description: '', reason: '', projectTaskId: '' }]);
   };
 
   const removeMissedTask = (id: string) => {
@@ -97,7 +93,17 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
   };
 
   const updateMissedTask = (id: string, field: keyof MissedTask, value: string) => {
-    setMissedTasks(missedTasks.map(m => m.id === id ? { ...m, [field]: value } : m));
+    setMissedTasks(missedTasks.map(m => {
+      if (m.id !== id) return m;
+      const updated = { ...m, [field]: value };
+      if (field === 'projectTaskId' && value !== 'custom') {
+        const pt = projectTasks.find(p => p.id === value);
+        if (pt) {
+          updated.description = `[${pt.client}] ${pt.title}`;
+        }
+      }
+      return updated;
+    }));
   };
 
   const addBlocker = () => {
@@ -182,26 +188,39 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
           {tasks.map((task, idx) => (
             <div key={task.id} className="grid grid-cols-12 gap-4 items-start p-4 bg-muted border border-border">
               <div className="col-span-12 md:col-span-5">
-                <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Task Description</label>
-                <input
-                  type="text"
-                  value={task.description}
-                  onChange={(e) => updateTask(task.id, 'description', e.target.value)}
-                  placeholder="What did you work on?"
+                <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Select Task Source</label>
+                <select
+                  value={task.projectTaskId || (task.description ? 'custom' : '')}
+                  onChange={(e) => updateTask(task.id, 'projectTaskId', e.target.value)}
+                  className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-sm mb-2"
                   required
-                />
-                <div className="mt-2">
-                  <select
-                    className="w-full bg-muted border border-border border-dashed p-1.5 text-[8px] uppercase font-black tracking-widest text-gray-400 outline-none focus:border-accent transition-colors"
-                    onChange={(e) => linkProjectTask(e.target.value, task.id)}
-                    value=""
-                  >
-                    <option value="">+ Link Project Task</option>
-                    {projectTasks.map(pt => (
-                      <option key={pt.id} value={pt.id}>{pt.client}: {pt.title}</option>
-                    ))}
-                  </select>
-                </div>
+                >
+                  <option value="">-- Choose a Task --</option>
+                  <option value="custom">+ New/Additional Task (Type below)</option>
+                  {projectTasks.filter(pt => pt.status !== ProjectTaskStatus.COMPLETED).map(pt => (
+                    <option key={pt.id} value={pt.id}>{pt.client}: {pt.title}</option>
+                  ))}
+                </select>
+
+                {(task.projectTaskId === 'custom' || !task.projectTaskId) && (
+                  <>
+                    <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1 mt-2">Task Description</label>
+                    <input
+                      type="text"
+                      className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-sm"
+                      value={task.description}
+                      onChange={(e) => updateTask(task.id, 'description', e.target.value)}
+                      placeholder="What did you work on?"
+                      required={task.projectTaskId === 'custom'}
+                    />
+                  </>
+                )}
+
+                {task.projectTaskId && task.projectTaskId !== 'custom' && (
+                  <div className="p-2 bg-accent/5 border border-accent/20 text-[10px] font-bold text-accent uppercase tracking-wider">
+                    Linked: {task.description}
+                  </div>
+                )}
               </div>
               <div className="col-span-6 md:col-span-3 flex space-x-2">
                 <div className="flex-1">
@@ -283,15 +302,36 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
           {missedTasks.map((m) => (
             <div key={m.id} className="grid grid-cols-12 gap-4 items-start p-4 bg-muted/50 border border-border border-dashed">
               <div className="col-span-12 md:col-span-6">
-                <input
-                  type="text"
-                  placeholder="What was missed?"
-                  value={m.description}
-                  onChange={(e) => updateMissedTask(m.id, 'description', e.target.value)}
-                  className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-sm"
-                />
+                <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-1">Missed Task Source</label>
+                <select
+                  value={m.projectTaskId || (m.description ? 'custom' : '')}
+                  onChange={(e) => updateMissedTask(m.id, 'projectTaskId', e.target.value)}
+                  className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-sm mb-2"
+                >
+                  <option value="">-- Choose a Task --</option>
+                  <option value="custom">+ New/Additional Task (Type below)</option>
+                  {projectTasks.filter(pt => pt.status !== ProjectTaskStatus.COMPLETED).map(pt => (
+                    <option key={pt.id} value={pt.id}>{pt.client}: {pt.title}</option>
+                  ))}
+                </select>
+
+                {(m.projectTaskId === 'custom' || !m.projectTaskId) && (
+                  <input
+                    type="text"
+                    placeholder="What was missed?"
+                    value={m.description}
+                    onChange={(e) => updateMissedTask(m.id, 'description', e.target.value)}
+                    className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-sm"
+                  />
+                )}
+
+                {m.projectTaskId && m.projectTaskId !== 'custom' && (
+                  <div className="p-2 bg-white/5 border border-white/10 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    Linked: {m.description}
+                  </div>
+                )}
               </div>
-              <div className="col-span-11 md:col-span-5">
+              <div className="col-span-11 md:col-span-5 pt-5">
                 <input
                   type="text"
                   placeholder="Why was it missed?"
