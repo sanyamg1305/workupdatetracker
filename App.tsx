@@ -10,6 +10,7 @@ import UserManagement from './components/UserManagement';
 import TaskSystem from './components/TaskSystem';
 import { Icons, ACCENT_COLOR } from './constants';
 import logo from './logo.png';
+import { seedDummyData } from './services/seeder';
 
 const App: React.FC = () => {
   const [auth, setAuth] = useState<AuthState>({ user: null, isAuthenticated: false });
@@ -368,15 +369,36 @@ const App: React.FC = () => {
       ) : activeTab === 'dashboard' ? (
         <div className="space-y-12">
           {auth.user?.role === UserRole.ADMIN ? (
-            <AdminDashboard
-              users={users}
-              updates={updates}
-              onGenerateReport={handleGenerateReport}
-              onViewDetails={(userId) => {
-                // Future: Detailed drill-down view
-                console.log('Viewing details for', userId);
-              }}
-            />
+            <div className="space-y-6">
+              <div className="flex justify-between items-center bg-accent/10 border border-accent/20 p-4 rounded-lg mb-4">
+                <div>
+                  <h3 className="text-accent font-black uppercase text-xs tracking-widest">Admin Actions</h3>
+                  <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">Initialize system with dummy data for 8 users</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (window.confirm("This will seed dummy data for 8 users. Continue?")) {
+                      setIsLoading(true);
+                      await seedDummyData();
+                      await refreshData();
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="bg-accent text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors"
+                >
+                  Seed System Data
+                </button>
+              </div>
+              <AdminDashboard
+                users={users}
+                updates={updates}
+                onGenerateReport={handleGenerateReport}
+                onViewDetails={(userId) => {
+                  // Future: Detailed drill-down view
+                  console.log('Viewing details for', userId);
+                }}
+              />
+            </div>
           ) : (
             <div className="space-y-8">
               <div className="flex justify-between items-end border-b border-border pb-8">
