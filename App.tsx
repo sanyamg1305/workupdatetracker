@@ -185,7 +185,7 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-bg flex items-center justify-center p-6">
         <div className="w-full max-w-md space-y-12">
           <div className="text-center flex flex-col items-center">
-            <img src={logo} alt="Myntmore" className="h-16 mb-4 w-auto" />
+            <img src={logo} alt="Myntmore" className="logo-main h-16 mb-4 w-auto" />
             <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-bold">Internal Work Tracker</p>
           </div>
 

@@ -47,7 +47,7 @@ const LogViewer: React.FC<LogViewerProps> = ({ updates, userName, onClose }) => 
                                         <div>
                                             <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-bold">Completed Tasks</p>
                                             <ul className="space-y-2">
-                                                {log.tasks.map(t => (
+                                                {(log.tasks || []).map(t => (
                                                     <li key={t.id} className="flex flex-col sm:flex-row justify-between items-start text-sm border-l-2 border-accent pl-3 py-2 bg-bg/50 gap-2">
                                                         <span className="text-gray-300">{t.description}</span>
                                                         <div className="flex items-center space-x-2 shrink-0">
@@ -59,11 +59,11 @@ const LogViewer: React.FC<LogViewerProps> = ({ updates, userName, onClose }) => 
                                             </ul>
                                         </div>
 
-                                        {log.missedTasks.length > 0 && (
+                                        {(log.missedTasks || []).length > 0 && (
                                             <div>
                                                 <p className="text-[10px] uppercase tracking-widest text-red-500 mb-2 font-bold">Missed Tasks</p>
                                                 <ul className="space-y-2">
-                                                    {log.missedTasks.map(m => (
+                                                    {(log.missedTasks || []).map(m => (
                                                         <li key={m.id} className="text-sm bg-red-500/5 border border-red-500/20 p-2 text-gray-400">
                                                             <span className="text-white font-bold">{m.description}</span> - {m.reason}
                                                         </li>
@@ -72,11 +72,11 @@ const LogViewer: React.FC<LogViewerProps> = ({ updates, userName, onClose }) => 
                                             </div>
                                         )}
 
-                                        {log.blockers.length > 0 && (
+                                        {(log.blockers || []).length > 0 && (
                                             <div>
                                                 <p className="text-[10px] uppercase tracking-widest text-yellow-500 mb-2 font-bold">Blockers</p>
                                                 <ul className="space-y-2">
-                                                    {log.blockers.map(b => (
+                                                    {(log.blockers || []).map(b => (
                                                         <li key={b.id} className="text-sm bg-yellow-500/5 border border-yellow-500/20 p-2 text-gray-400">
                                                             <span className="text-white font-bold">{b.description}</span> - {b.reason}
                                                         </li>

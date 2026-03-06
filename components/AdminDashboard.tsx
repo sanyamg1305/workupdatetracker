@@ -25,13 +25,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, updates, onGener
   });
 
   const stats: MonthlyStats[] = useMemo(() => {
-    return users
+    return (users || [])
       .filter(u => u.role === UserRole.USER)
       .map(user => {
-        const userUpdates = updates.filter(up => up.userId === user.id && up.month === selectedMonth);
-        const totalHours = userUpdates.reduce((acc, curr) => acc + curr.totalTime, 0);
+        const userUpdates = (updates || []).filter(up => up.userId === user.id && up.month === selectedMonth);
+        const totalHours = userUpdates.reduce((acc, curr) => acc + (curr.totalTime || 0), 0);
         const avgProductivity = userUpdates.length > 0
-          ? userUpdates.reduce((acc, curr) => acc + curr.productivityScore, 0) / userUpdates.length
+          ? userUpdates.reduce((acc, curr) => acc + (curr.productivityScore || 0), 0) / userUpdates.length
           : 0;
 
         // Mock "Days Missed" calculation - assumes 22 working days per month
@@ -49,7 +49,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, updates, onGener
   }, [users, updates, selectedMonth]);
 
   const handleGenerateReport = async (userId: string, userName: string) => {
-    const userUpdates = updates.filter(up => up.userId === userId && up.month === selectedMonth);
+    const userUpdates = (updates || []).filter(up => up.userId === userId && up.month === selectedMonth);
     setReportState({ ...reportState, isOpen: true, isLoading: true, userName, month: selectedMonth, userUpdates });
     try {
       const content = await onGenerateReport(userId, selectedMonth);

@@ -90,15 +90,16 @@ export const storageService = {
   },
 
   getTasksByUser: async (userId: string): Promise<ProjectTask[]> => {
-    const { data, error } = await supabase
-      .from('project_tasks')
-      .select('*')
-      .or(`assignedUserId.eq.${userId},collaboratorIds.cs.{${userId}}`);
-    if (error) {
-      console.error('Error fetching user tasks:', error);
-      return [];
-    }
-    return data || [];
+    // Separate queries to avoid complex .or() hangs
+    const [{ data: assigned }, { data: collaborative }] = await Promise.all([
+      supabase.from('project_tasks').select('*').eq('assignedUserId', userId),
+      supabase.from('project_tasks').select('*').contains('collaboratorIds', [userId])
+    ]);
+
+    const allTasks = [...(assigned || []), ...(collaborative || [])];
+    // De-duplicate by ID
+    const uniqueTasks = Array.from(new Map(allTasks.map(t => [t.id, t])).values());
+    return uniqueTasks;
   },
 
   saveTask: async (task: ProjectTask): Promise<void> => {
@@ -119,19 +120,20 @@ export const storageService = {
 
   // Folder Management
   getFolders: async (userId: string, isAdmin: boolean): Promise<TaskFolder[]> => {
-    let query = supabase.from('task_folders').select('*');
-
-    if (!isAdmin) {
-      // Non-admins see: PUBLIC folders, or folders where they are the owner, or folders where they are in accessibleUserIds
-      query = query.or(`visibility.eq.PUBLIC,ownerId.eq.${userId},accessibleUserIds.cs.{${userId}}`);
+    if (isAdmin) {
+      const { data } = await supabase.from('task_folders').select('*');
+      return data || [];
     }
 
-    const { data, error } = await query;
-    if (error) {
-      console.error('Error fetching folders:', error);
-      return [];
-    }
-    return data || [];
+    // Non-admins see: PRIVATE folders they own, or folders where they are in accessibleUserIds
+    const [{ data: owned }, { data: shared }] = await Promise.all([
+      supabase.from('task_folders').select('*').eq('ownerId', userId),
+      supabase.from('task_folders').select('*').contains('accessibleUserIds', [userId])
+    ]);
+
+    const allFolders = [...(owned || []), ...(shared || [])];
+    // De-duplicate by ID
+    return Array.from(new Map(allFolders.map(f => [f.id, f])).values());
   },
 
   saveFolder: async (folder: TaskFolder): Promise<void> => {

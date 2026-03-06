@@ -12,10 +12,55 @@
 body {
     margin: 0;
     padding: 0;
-    background-color: var(--bg);
-    color: var(--primary);
+    background-color: #000000;
+    color: #FFFFFF;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fallback styles for critical layout elements */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+.logo-main {
+    height: 4rem !important;
+    /* h-16 equivalent */
+    width: auto !important;
+    margin-bottom: 1rem !important;
+}
+
+.bg-bg {
+    background-color: #000000 !important;
+}
+
+.text-primary {
+    color: #FFFFFF !important;
+}
+
+.border-border {
+    border-color: #333333 !important;
+}
+
+.bg-muted {
+    background-color: #1A1A1A !important;
+}
+
+.text-accent {
+    color: #FFC947 !important;
+}
+
+.bg-accent {
+    background-color: #FFC947 !important;
+}
+
+.text-black {
+    color: #000000 !important;
+}
+
+.text-white {
+    color: #FFFFFF !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

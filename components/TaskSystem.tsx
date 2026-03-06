@@ -35,10 +35,17 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
 
     const fetchData = async () => {
         setIsLoading(true);
+
+        // Safety timeout to ensure loading screen always disappears after 5 seconds
+        const timeoutId = setTimeout(() => {
+            setIsLoading(false);
+            console.warn("Task fetch timed out - forcing loading to false");
+        }, 5000);
+
         try {
             const isAdmin = user.role === UserRole.ADMIN;
             const fetchedFolders = await storageService.getFolders(user.id, isAdmin);
-            setFolders(fetchedFolders);
+            setFolders(fetchedFolders || []);
 
             let fetchedTasks: ProjectTask[] = [];
             if (view === 'ADMIN' && isAdmin) {
@@ -46,17 +53,20 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
             } else {
                 fetchedTasks = await storageService.getTasksByUser(user.id);
             }
-            setTasks(fetchedTasks);
+            setTasks(fetchedTasks || []);
         } catch (error) {
             console.error("Error fetching task data:", error);
+            setTasks([]);
+            setFolders([]);
         } finally {
+            clearTimeout(timeoutId);
             setIsLoading(false);
         }
     };
 
-    const filteredTasks = tasks.filter(task => {
+    const filteredTasks = (tasks || []).filter(task => {
         if (activeFolderId) return task.folderId === activeFolderId;
-        if (view === 'MY_TASKS') return task.assignedUserId === user.id || task.collaboratorIds.includes(user.id);
+        if (view === 'MY_TASKS') return task.assignedUserId === user.id || (task.collaboratorIds || []).includes(user.id);
         return true; // Admin view or all tasks
     });
 
@@ -543,8 +553,8 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                                     </span>
                                 )}
                             </div>
-                            <h4 className={`text-base md:text-lg font-black uppercase leading-tight group-hover:text-accent transition-colors break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>{task.title}</h4>
-                            <p className="text-[11px] md:text-xs text-gray-500 mt-2 line-clamp-2 max-w-full">{task.description}</p>
+                            <h4 className={`text-base md:text-lg font-black uppercase leading-tight group-hover:text-accent transition-colors break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>{task.title || 'Untitled Task'}</h4>
+                            <p className="text-[11px] md:text-xs text-gray-500 mt-2 line-clamp-2 max-w-full">{task.description || 'No description provided.'}</p>
                         </div>
                         <div className="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between md:justify-start gap-3">
                             <select
@@ -569,15 +579,17 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                         <div className="flex items-center gap-4">
                             <div className="flex items-center">
                                 <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[8px] font-black text-black">
-                                    {users.find((u: any) => u.id === task.assignedUserId)?.name.charAt(0)}
+                                    {users.find((u: any) => u.id === task.assignedUserId)?.name?.charAt(0) || '?'}
                                 </div>
-                                <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase truncate max-w-[80px]">{users.find((u: any) => u.id === task.assignedUserId)?.name}</span>
+                                <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase truncate max-w-[80px]">
+                                    {users.find((u: any) => u.id === task.assignedUserId)?.name || 'Unknown'}
+                                </span>
                             </div>
-                            {task.collaboratorIds.length > 0 && (
+                            {(task.collaboratorIds || []).length > 0 && (
                                 <div className="flex -space-x-2">
-                                    {task.collaboratorIds.map((cid: any) => (
+                                    {(task.collaboratorIds || []).map((cid: any) => (
                                         <div key={cid} title={users.find((u: any) => u.id === cid)?.name} className="w-5 h-5 rounded-full bg-border border border-bg flex items-center justify-center text-[8px] font-black text-gray-400">
-                                            {users.find((u: any) => u.id === cid)?.name.charAt(0)}
+                                            {users.find((u: any) => u.id === cid)?.name?.charAt(0) || '?'}
                                         </div>
                                     ))}
                                 </div>
@@ -587,7 +599,9 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                         <div className="flex items-center justify-between w-full sm:w-auto gap-4">
                             <div className="flex items-center text-[10px] text-gray-500">
                                 <Icons.Calendar className="w-3 h-3 mr-1" />
-                                <span className="uppercase font-bold tracking-widest">{new Date(task.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                                <span className="uppercase font-bold tracking-widest">
+                                    {task.endDate ? new Date(task.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'No Date'}
+                                </span>
                             </div>
                             {(user.id === task.assignedUserId || user.role === UserRole.ADMIN) && (
                                 <div className="flex gap-2">

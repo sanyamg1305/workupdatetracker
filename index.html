@@ -6,21 +6,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Myntmore Work Tracker</title>
     <script>
-        window.onerror = function (message, source, lineno, colno, error) {
-            alert("Error: " + message + "\nSource: " + source + "\nLine: " + lineno);
+        // Silently handle tailwind loading
+        window.tailwind = {
+            config: {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: '#FFFFFF',
+                            accent: '#FFC947',
+                            bg: '#000000',
+                            muted: '#1A1A1A',
+                            border: '#333333'
+                        }
+                    }
+                }
+            }
         };
     </script>
-    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link rel="icon" type="image/png" href="/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="/index.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #000000;
             color: #FFFFFF;
+            margin: 0;
         }
 
-        /* Custom scrollbar for minimalist feel */
+        /* Immediate Layout Guard */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .logo-main {
+            height: 64px;
+            width: auto;
+            margin-bottom: 16px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         ::-webkit-scrollbar {
             width: 4px;
         }
@@ -37,23 +66,7 @@
             background: #FFC947;
         }
     </style>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#FFFFFF',
-                        accent: '#FFC947',
-                        bg: '#000000',
-                        muted: '#1A1A1A',
-                        border: '#333333'
-                    }
-                }
-            }
-        }
-    </script>
-
-    <link rel="stylesheet" href="/index.css">
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 </head>
 
 <body class="bg-bg text-primary">
