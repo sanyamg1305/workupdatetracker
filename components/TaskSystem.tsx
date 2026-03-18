@@ -66,7 +66,7 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
 
     const filteredTasks = (tasks || []).filter(task => {
         if (activeFolderId) return task.folderId === activeFolderId;
-        if (view === 'MY_TASKS') return task.assignedUserId === user.id || (task.collaboratorIds || []).includes(user.id);
+        if (view === 'MY_TASKS') return (task.assignedUserIds || []).includes(user.id) || (task.collaboratorIds || []).includes(user.id);
         return true; // Admin view or all tasks
     });
 
@@ -285,7 +285,8 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
         title: initialData?.title || '',
         description: initialData?.description || '',
         client: initialData?.client || '',
-        assignedUserId: initialData?.assignedUserId || currentUserId,
+        assignedUserIds: initialData?.assignedUserIds || (currentUserId ? [currentUserId] : []),
+        primaryOwnerId: initialData?.primaryOwnerId || '',
         collaboratorIds: initialData?.collaboratorIds || [],
         isCollaborative: initialData?.isCollaborative || false,
         folderId: initialData?.folderId || activeFolderId || null,
@@ -332,15 +333,37 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
                                 className="w-full bg-muted border border-border p-3 text-white outline-none focus:border-accent font-bold uppercase"
                             />
                         </div>
-                        <div>
-                            <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-black">Assigned User</label>
+                        <div className="col-span-2 md:col-span-1">
+                            <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-black">Primary Owner (Optional)</label>
                             <select
-                                value={formData.assignedUserId}
-                                onChange={e => setFormData({ ...formData, assignedUserId: e.target.value })}
+                                value={formData.primaryOwnerId}
+                                onChange={e => setFormData({ ...formData, primaryOwnerId: e.target.value })}
                                 className="w-full bg-muted border border-border p-3 text-white outline-none focus:border-accent font-bold uppercase"
                             >
+                                <option value="">-- None --</option>
                                 {users.map((u: User) => <option key={u.id} value={u.id}>{u.name}</option>)}
                             </select>
+                        </div>
+                        <div className="col-span-2 md:col-span-1">
+                            <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-black">Select Assigned Users (Min 1)</label>
+                            <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-2 bg-muted border border-border">
+                                {users.map((u: User) => (
+                                    <label key={u.id} className="flex items-center gap-2 p-1 hover:bg-bg cursor-pointer transition-colors group">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.assignedUserIds.includes(u.id)}
+                                            onChange={e => {
+                                                const ids = e.target.checked
+                                                    ? [...formData.assignedUserIds, u.id]
+                                                    : formData.assignedUserIds.filter((id: string) => id !== u.id);
+                                                setFormData({ ...formData, assignedUserIds: ids });
+                                            }}
+                                            className="accent-accent"
+                                        />
+                                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase">{u.name}</span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
 
                         <div className="col-span-2">
@@ -362,7 +385,7 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
                             <div className="col-span-2">
                                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-black">Select Collaborators</label>
                                 <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-2 bg-muted border border-border">
-                                    {users.filter((u: User) => u.id !== formData.assignedUserId).map((u: User) => (
+                                    {users.filter((u: User) => !formData.assignedUserIds.includes(u.id)).map((u: User) => (
                                         <label key={u.id} className="flex items-center gap-2 p-1 hover:bg-bg cursor-pointer transition-colors group">
                                             <input
                                                 type="checkbox"
@@ -425,7 +448,13 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
                 <div className="p-6 border-t border-border flex justify-end gap-4 bg-muted/30">
                     <button onClick={onClose} className="px-6 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Cancel</button>
                     <button
-                        onClick={() => onSave(formData)}
+                        onClick={() => {
+                            if (formData.assignedUserIds.length === 0) {
+                                alert("Please select at least one assigned user.");
+                                return;
+                            }
+                            onSave(formData);
+                        }}
                         className="bg-accent text-black px-10 py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white transition-colors"
                     >
                         {initialData ? 'Update Task' : 'Confirm Task'}
@@ -578,11 +607,15 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t border-border/50">
                         <div className="flex items-center gap-4">
                             <div className="flex items-center">
-                                <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[8px] font-black text-black">
-                                    {users.find((u: any) => u.id === task.assignedUserId)?.name?.charAt(0) || '?'}
+                                <div className="flex -space-x-2">
+                                    {(task.assignedUserIds || []).map((aid: any) => (
+                                        <div key={aid} title={users.find((u: any) => u.id === aid)?.name} className="w-5 h-5 rounded-full bg-accent border-2 border-bg flex items-center justify-center text-[8px] font-black text-black z-10 relative">
+                                            {users.find((u: any) => u.id === aid)?.name?.charAt(0) || '?'}
+                                        </div>
+                                    ))}
                                 </div>
-                                <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase truncate max-w-[80px]">
-                                    {users.find((u: any) => u.id === task.assignedUserId)?.name || 'Unknown'}
+                                <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase truncate max-w-[120px]">
+                                    {(task.assignedUserIds || []).map((aid: any) => users.find((u: any) => u.id === aid)?.name?.split(' ')[0]).join(', ') || 'Unknown'}
                                 </span>
                             </div>
                             {(task.collaboratorIds || []).length > 0 && (
@@ -603,7 +636,7 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                                     {task.endDate ? new Date(task.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'No Date'}
                                 </span>
                             </div>
-                            {(user.id === task.assignedUserId || user.role === UserRole.ADMIN) && (
+                            {((task.assignedUserIds || []).includes(user.id) || task.primaryOwnerId === user.id || user.role === UserRole.ADMIN) && (
                                 <div className="flex gap-2">
                                     <button
                                         onClick={onEdit}

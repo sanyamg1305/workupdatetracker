@@ -30,7 +30,8 @@ CREATE TABLE project_tasks (
     title TEXT NOT NULL,
     description TEXT,
     client TEXT NOT NULL,
-    "assignedUserId" TEXT NOT NULL REFERENCES app_users(id),
+    "assignedUserIds" TEXT[] DEFAULT '{}',
+    "primaryOwnerId" TEXT REFERENCES app_users(id),
     "collaboratorIds" TEXT[] DEFAULT '{}',
     "folderId" TEXT REFERENCES task_folders(id),
     "startDate" TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -59,6 +60,6 @@ CREATE TABLE daily_updates (
 );
 
 -- Indexing for performance
-CREATE INDEX idx_tasks_assigned_user ON project_tasks("assignedUserId");
+CREATE INDEX idx_tasks_assigned_users ON project_tasks USING GIN ("assignedUserIds");
 CREATE INDEX idx_updates_user_date ON daily_updates("userId", date);
 CREATE INDEX idx_folders_owner ON task_folders("ownerId");

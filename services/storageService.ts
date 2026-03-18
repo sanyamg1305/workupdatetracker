@@ -28,7 +28,7 @@ export const storageService = {
   deleteUser: async (userId: string): Promise<void> => {
     // 1. Delete associated data first to handle foreign key constraints
     await supabase.from('daily_updates').delete().eq('userId', userId);
-    await supabase.from('project_tasks').delete().eq('assignedUserId', userId);
+    await supabase.from('project_tasks').delete().eq('primaryOwnerId', userId);
     await supabase.from('task_folders').delete().eq('ownerId', userId);
 
     // 2. Delete the user
@@ -92,7 +92,7 @@ export const storageService = {
   getTasksByUser: async (userId: string): Promise<ProjectTask[]> => {
     // Separate queries to avoid complex .or() hangs
     const [{ data: assigned }, { data: collaborative }] = await Promise.all([
-      supabase.from('project_tasks').select('*').eq('assignedUserId', userId),
+      supabase.from('project_tasks').select('*').contains('assignedUserIds', [userId]),
       supabase.from('project_tasks').select('*').contains('collaboratorIds', [userId])
     ]);
 

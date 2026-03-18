@@ -21,7 +21,11 @@ export const generateMonthlyReport = async (updates: DailyWorkUpdate[], userName
       description: t.description,
       time: t.timeSpent,
       category: t.category,
-      projectTaskId: t.projectTaskId
+      projectTaskId: t.projectTaskId,
+      isScheduled: t.isScheduled,
+      estimatedTime: t.estimatedTimeAtLogDate,
+      variance: t.variance,
+      statusAtSubmission: t.statusAtSubmission
     })),
     missed: u.missedTasks.map(m => ({
       description: m.description,
@@ -56,46 +60,53 @@ INPUT DATA:
 | :--- | :--- | :--- |
 | **Main Time Sink** | [Task Name] | [1 sentence on impact] |
 | **Capacity Type** | [Under/Optimal/Over] | [1 sentence evidence] |
-| **Focus Quality** | [High/Mid/Low] | [1 sentence HPA ratio comment] |
 | **Operational Drag** | [Low/High] | [1 sentence on inhibitors] |
 
 ---
 
-2️⃣ MONTHLY CAPACITY DIAGNOSIS
-| Category | Growth Hours (HPA) | Core Hours (CTA) | Admin/Drag (LPA) | Total Output |
-| :--- | :--- | :--- | :--- | :--- |
-| **Allocation** | Xh | Xh | Xh | Xh |
-| **% Mix** | X% | X% | X% | 100% |
-
-> [!NOTE]
-> Insight: [Exactly one punchy sentence about the time mix]
+2️⃣ PLANNED VS ACTUAL WORKLOAD
+| Metric | Hours | Insight |
+| :--- | :--- | :--- |
+| **Scheduled Hours** | Xh | [1 sentence variance implication] |
+| **Actual Logged** | Xh | [1 sentence on output] |
+| **Overall Variance** | +/- Xh | [1 sentence on planning reality] |
 
 ---
 
-3️⃣ TASK EFFICIENCY & PLANNING PRECISION
-| Top 5 Critical Tasks | Actual Time | Planning Delta | Operator Verdict |
-| :--- | :--- | :--- | :--- |
-| [Task] | Xh | [+/- Xh] | [Delegate/Optimize/Keep] |
+3️⃣ ESTIMATION ACCURACY
+| Category | Performance | Types / Patterns |
+| :--- | :--- | :--- |
+| **Best Estimated** | [Accurate/Spot-on] | [Task types consistently accurate] |
+| **Worst Estimated** | [Under/Over] | [Task types frequently delayed] |
 
-**Planning Compliance Score:** [0-100%]
-*Insight:* [1 sentence on where estimation logic is failing]
+*Trend:* [1 sentence on whether estimation discipline is improving]
 
 ---
 
-4️⃣ INHIBITOR CLUSTERING (MISSED & BLOCKERS)
+4️⃣ UNPLANNED WORK BURDEN
+| Metric | Value | Operational Interpretation |
+| :--- | :--- | :--- |
+| **Hours on Manual/Unplanned** | Xh | [1 sentence on strategic disruption] |
+| **% of Total Time** | X% | [Is reactive work eating strategic work?] |
+
+---
+
+5️⃣ COLLABORATION LOAD
+| Metric | Stat | Implication |
+| :--- | :--- | :--- |
+| **Multi-Assignee Tasks** | [Count] | [1 sentence overview] |
+| **Collaboration Time** | Xh | [Is collaboration creating efficiency or bloated confusion?] |
+
+---
+
+6️⃣ INHIBITOR CLUSTERING (MISSED & BLOCKERS)
 | Category | Instances | Root Cause | Structural Risk |
 | :--- | :--- | :--- | :--- |
 | [Task/Missed] | [count] | [1 sentence cause] | [Low/Mid/High] |
 
 ---
 
-5️⃣ STRATEGIC CALLOUTS 🚨
-- **[Callout 1]:** [Max 15 words]
-- **[Callout 2]:** [Max 15 words]
-
----
-
-6️⃣ HIGH-IMPACT LEVERS (TOP 3 ONLY)
+7️⃣ HIGH-IMPACT LEVERS (TOP 3 ONLY)
 1. **[Action]**: [Expected Outcome - Max 20 words]
 2. **[Action]**: [Expected Outcome - Max 20 words]
 3. **[Action]**: [Expected Outcome - Max 20 words]

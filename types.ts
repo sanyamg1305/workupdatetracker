@@ -16,6 +16,10 @@ export interface Task {
   timeSpent: number;
   category: TaskCategory;
   projectTaskId?: string;
+  isScheduled?: boolean;
+  estimatedTimeAtLogDate?: number;
+  variance?: number;
+  statusAtSubmission?: ProjectTaskStatus;
 }
 
 export interface MissedTask {
@@ -108,7 +112,8 @@ export interface ProjectTask {
   title: string;
   description: string;
   client: string;
-  assignedUserId: string;
+  assignedUserIds: string[];
+  primaryOwnerId?: string;
   collaboratorIds: string[];
   folderId?: string;
   startDate: string;
