@@ -83,7 +83,7 @@ export const seedDummyData = async () => {
                     title: `${client} Project Phase ${i + 1}`,
                     description: `Core delivery for ${client}.`,
                     client: client,
-                    assignedUserId: user.id,
+                    assignedUserIds: [user.id],
                     collaboratorIds: [],
                     folderId: folder?.id,
                     startDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
@@ -109,7 +109,7 @@ export const seedDummyData = async () => {
 
             for (const user of seededUsers) {
                 const updateId = getDeterministicId('upd', user.id, dateStr);
-                const userTasks = seededTasks.filter(t => t.assignedUserId === user.id);
+                const userTasks = seededTasks.filter(t => t.assignedUserIds.includes(user.id));
 
                 const dailyTasks = userTasks.slice(0, 2).map((t, idx) => ({
                     id: `${updateId}_dt_${idx}`,

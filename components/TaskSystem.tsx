@@ -286,7 +286,7 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
         description: initialData?.description || '',
         client: initialData?.client || '',
         assignedUserIds: initialData?.assignedUserIds || (currentUserId ? [currentUserId] : []),
-        primaryOwnerId: initialData?.primaryOwnerId || '',
+        primaryOwnerId: initialData?.primaryOwnerId || currentUserId || null,
         collaboratorIds: initialData?.collaboratorIds || [],
         isCollaborative: initialData?.isCollaborative || false,
         folderId: initialData?.folderId || activeFolderId || null,
@@ -336,8 +336,8 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
                         <div className="col-span-2 md:col-span-1">
                             <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-black">Primary Owner (Optional)</label>
                             <select
-                                value={formData.primaryOwnerId}
-                                onChange={e => setFormData({ ...formData, primaryOwnerId: e.target.value })}
+                                value={formData.primaryOwnerId || ''}
+                                onChange={e => setFormData({ ...formData, primaryOwnerId: e.target.value || null })}
                                 className="w-full bg-muted border border-border p-3 text-white outline-none focus:border-accent font-bold uppercase"
                             >
                                 <option value="">-- None --</option>
@@ -345,18 +345,23 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
                             </select>
                         </div>
                         <div className="col-span-2 md:col-span-1">
-                            <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-black">Select Assigned Users (Min 1)</label>
+                            <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-black">Select Assigned Users ({formData.isCollaborative ? 'Multiple' : 'Single'})</label>
                             <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-2 bg-muted border border-border">
                                 {users.map((u: User) => (
                                     <label key={u.id} className="flex items-center gap-2 p-1 hover:bg-bg cursor-pointer transition-colors group">
                                         <input
-                                            type="checkbox"
+                                            type={formData.isCollaborative ? "checkbox" : "radio"}
+                                            name="assignedUser"
                                             checked={formData.assignedUserIds.includes(u.id)}
                                             onChange={e => {
-                                                const ids = e.target.checked
-                                                    ? [...formData.assignedUserIds, u.id]
-                                                    : formData.assignedUserIds.filter((id: string) => id !== u.id);
-                                                setFormData({ ...formData, assignedUserIds: ids });
+                                                if (formData.isCollaborative) {
+                                                    const ids = e.target.checked
+                                                        ? [...formData.assignedUserIds, u.id]
+                                                        : formData.assignedUserIds.filter((id: string) => id !== u.id);
+                                                    setFormData({ ...formData, assignedUserIds: ids });
+                                                } else {
+                                                    setFormData({ ...formData, assignedUserIds: [u.id] });
+                                                }
                                             }}
                                             className="accent-accent"
                                         />
@@ -373,7 +378,15 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
                                     <p className="text-[8px] text-gray-500 uppercase mt-1">Enable to assign multiple team members to this task</p>
                                 </div>
                                 <button
-                                    onClick={() => setFormData({ ...formData, isCollaborative: !formData.isCollaborative, collaboratorIds: !formData.isCollaborative ? formData.collaboratorIds : [] })}
+                                    onClick={() => {
+                                        const willBeCollab = !formData.isCollaborative;
+                                        setFormData({ 
+                                            ...formData, 
+                                            isCollaborative: willBeCollab, 
+                                            collaboratorIds: willBeCollab ? formData.collaboratorIds : [],
+                                            assignedUserIds: !willBeCollab && formData.assignedUserIds.length > 1 ? [formData.assignedUserIds[0]] : formData.assignedUserIds
+                                        });
+                                    }}
                                     className={`w-12 h-6 rounded-full transition-colors relative ${formData.isCollaborative ? 'bg-accent' : 'bg-gray-700'}`}
                                 >
                                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${formData.isCollaborative ? 'right-1' : 'left-1'}`} />
