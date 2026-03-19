@@ -33,12 +33,13 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
         fetchData();
     }, [user, view]);
 
-    const fetchData = async () => {
-        setIsLoading(true);
+    const fetchData = async (silent: boolean | React.ChangeEvent<any> | React.MouseEvent<any> = false) => {
+        const isSilent = silent === true;
+        if (!isSilent) setIsLoading(true);
 
         // Safety timeout to ensure loading screen always disappears after 5 seconds
         const timeoutId = setTimeout(() => {
-            setIsLoading(false);
+            if (!isSilent) setIsLoading(false);
             console.warn("Task fetch timed out - forcing loading to false");
         }, 5000);
 
@@ -60,11 +61,12 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
             setFolders([]);
         } finally {
             clearTimeout(timeoutId);
-            setIsLoading(false);
+            if (!isSilent) setIsLoading(false);
         }
     };
 
     const filteredTasks = (tasks || []).filter(task => {
+        if (activeFolderId === 'UNASSIGNED') return !task.folderId && ((task.assignedUserIds || []).includes(user.id) || (task.collaboratorIds || []).includes(user.id));
         if (activeFolderId) return task.folderId === activeFolderId;
         if (view === 'MY_TASKS') return (task.assignedUserIds || []).includes(user.id) || (task.collaboratorIds || []).includes(user.id);
         return true; // Admin view or all tasks
@@ -101,6 +103,12 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
                             Admin Overview
                         </button>
                     )}
+                    <button
+                        onClick={() => { setActiveFolderId('UNASSIGNED'); setView('FOLDER'); }}
+                        className={`w-full text-left px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-between ${activeFolderId === 'UNASSIGNED' ? 'bg-white text-black' : 'text-gray-400 hover:bg-muted'}`}
+                    >
+                        <span>Unassigned Tasks</span>
+                    </button>
                     <div className="my-4 border-t border-border/50 mx-2" />
                     {folders.map(folder => (
                         <button
@@ -141,6 +149,12 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
                             Admin
                         </button>
                     )}
+                    <button
+                        onClick={() => { setActiveFolderId('UNASSIGNED'); setView('FOLDER'); }}
+                        className={`whitespace-nowrap px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all ${activeFolderId === 'UNASSIGNED' && view === 'FOLDER' ? 'bg-white border-white text-black' : 'border-border text-gray-400'}`}
+                    >
+                        Unassigned
+                    </button>
                     {folders.map(folder => (
                         <button
                             key={folder.id}
@@ -159,7 +173,7 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
                 <div className="p-6 border-b border-border flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-black uppercase tracking-tight">
-                            {activeFolderId ? folders.find(f => f.id === activeFolderId)?.name : (view === 'ADMIN' ? 'All Tasks' : 'My Assigned Tasks')}
+                            {activeFolderId === 'UNASSIGNED' ? 'Unassigned Tasks' : (activeFolderId ? folders.find(f => f.id === activeFolderId)?.name : (view === 'ADMIN' ? 'All Tasks' : 'My Assigned Tasks'))}
                         </h2>
                         <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-1">
                             {filteredTasks.length} {filteredTasks.length === 1 ? 'Task' : 'Tasks'} Total
@@ -193,7 +207,7 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
                                         user={user}
                                         users={users}
                                         onEdit={() => { setEditingTask(task); setIsTaskModalOpen(true); }}
-                                        onRefresh={fetchData}
+                                        onRefresh={(silent: boolean) => fetchData(silent === true)}
                                     />
                                 ))}
                             </div>
@@ -220,7 +234,7 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
                                                     user={user}
                                                     users={users}
                                                     onEdit={() => { setEditingTask(task); setIsTaskModalOpen(true); }}
-                                                    onRefresh={fetchData}
+                                                    onRefresh={(silent: boolean) => fetchData(silent === true)}
                                                 />
                                             ))}
                                         </div>
@@ -245,7 +259,7 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
                             createdAt: editingTask?.createdAt || new Date().toISOString()
                         } as ProjectTask);
                         setIsTaskModalOpen(false);
-                        fetchData();
+                        fetchData(true);
                     }}
                     users={users}
                     currentUserId={user.id}
@@ -269,7 +283,7 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
                             createdAt: new Date().toISOString()
                         } as TaskFolder);
                         setIsFolderModalOpen(false);
-                        fetchData();
+                        fetchData(true);
                     }}
                     users={users}
                     isAdmin={user.role === UserRole.ADMIN}
@@ -281,6 +295,7 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
 
 // Simplified Internal Modals for speed/cohesion
 const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData, activeFolderId }: any) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         title: initialData?.title || '',
         description: initialData?.description || '',
@@ -461,16 +476,22 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
                 <div className="p-6 border-t border-border flex justify-end gap-4 bg-muted/30">
                     <button onClick={onClose} className="px-6 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Cancel</button>
                     <button
-                        onClick={() => {
+                        disabled={isSubmitting}
+                        onClick={async () => {
                             if (formData.assignedUserIds.length === 0) {
                                 alert("Please select at least one assigned user.");
                                 return;
                             }
-                            onSave(formData);
+                            setIsSubmitting(true);
+                            try {
+                                await onSave(formData);
+                            } finally {
+                                setIsSubmitting(false);
+                            }
                         }}
-                        className="bg-accent text-black px-10 py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white transition-colors"
+                        className="bg-accent text-black px-10 py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white transition-colors disabled:opacity-50"
                     >
-                        {initialData ? 'Update Task' : 'Confirm Task'}
+                        {isSubmitting ? 'Saving...' : (initialData ? 'Update Task' : 'Confirm Task')}
                     </button>
                 </div>
             </div>
@@ -563,7 +584,7 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
     const toggleComplete = async () => {
         const newStatus = isCompleted ? ProjectTaskStatus.IN_PROGRESS : ProjectTaskStatus.COMPLETED;
         await storageService.saveTask({ ...task, status: newStatus });
-        onRefresh();
+        onRefresh(true);
     };
 
     return (
@@ -603,7 +624,7 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                                 value={task.status}
                                 onChange={(e) => {
                                     const newStatus = e.target.value as ProjectTaskStatus;
-                                    storageService.saveTask({ ...task, status: newStatus }).then(onRefresh);
+                                    storageService.saveTask({ ...task, status: newStatus }).then(() => onRefresh(true));
                                 }}
                                 className="bg-bg border border-border text-[9px] md:text-[10px] font-black uppercase tracking-widest p-2 outline-none focus:border-accent transition-colors flex-1 md:flex-none"
                             >
@@ -661,7 +682,7 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                                         onClick={async () => {
                                             if (window.confirm("Delete this task?")) {
                                                 await storageService.deleteTask(task.id);
-                                                onRefresh();
+                                                onRefresh(true);
                                             }
                                         }}
                                         className="text-gray-600 hover:text-red-500 transition-colors"

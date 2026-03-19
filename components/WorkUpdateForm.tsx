@@ -13,6 +13,8 @@ interface WorkUpdateFormProps {
 interface TaskForm extends Task {
   hours: number;
   minutes: number;
+  isMissed?: boolean;
+  missedReason?: string;
 }
 
 const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCancel }) => {
@@ -54,7 +56,9 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                isScheduled: true,
                estimatedTimeAtLogDate: pt.timeEstimate,
                variance: -pt.timeEstimate,
-               statusAtSubmission: pt.status
+               statusAtSubmission: pt.status,
+               isMissed: false,
+               missedReason: ''
            };
        });
        return [...newScheduled, ...manual];
@@ -68,8 +72,10 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
   const scheduledTasks = tasks.filter(t => t.isScheduled);
   const manualTasks = tasks.filter(t => !t.isScheduled);
 
-  const totalScheduledEst = scheduledTasks.reduce((acc, t) => acc + (t.estimatedTimeAtLogDate || 0), 0);
-  const totalScheduledActual = scheduledTasks.reduce((acc, t) => acc + (t.timeSpent || 0), 0);
+  const activeScheduledTasks = scheduledTasks.filter(t => !t.isMissed);
+
+  const totalScheduledEst = activeScheduledTasks.reduce((acc, t) => acc + (t.estimatedTimeAtLogDate || 0), 0);
+  const totalScheduledActual = activeScheduledTasks.reduce((acc, t) => acc + (t.timeSpent || 0), 0);
   const totalScheduledVariance = totalScheduledActual - totalScheduledEst;
 
   const addTask = () => {
@@ -104,6 +110,12 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
         if (updatedTask.isScheduled && updatedTask.estimatedTimeAtLogDate !== undefined) {
              updatedTask.variance = timeSpent - updatedTask.estimatedTimeAtLogDate;
         }
+      }
+
+      if (field === 'isMissed' && value === true) {
+        updatedTask.hours = 0;
+        updatedTask.minutes = 0;
+        updatedTask.timeSpent = 0;
       }
 
       if (field === 'projectTaskId' && value !== 'custom' && !t.isScheduled) {
@@ -144,14 +156,31 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
     }
 
     setIsSubmitting(true);
+
+    const finalTasks: Task[] = [];
+    const finalMissed = [...missedTasks];
+    
+    tasks.forEach(({ hours, minutes, isMissed, missedReason, ...t }) => {
+        if (isMissed) {
+             finalMissed.push({
+                  id: Math.random().toString(36).substr(2, 9),
+                  description: t.description,
+                  reason: missedReason || 'Missed scheduled task',
+                  projectTaskId: t.projectTaskId
+             });
+        } else {
+             finalTasks.push(t as Task);
+        }
+    });
+
     const update: DailyWorkUpdate = {
       id: Math.random().toString(36).substr(2, 9),
       userId: user.id,
       userName: user.name,
       date,
       month: date.substring(0, 7),
-      tasks: tasks.map(({ hours, minutes, ...t }) => t),
-      missedTasks,
+      tasks: finalTasks,
+      missedTasks: finalMissed,
       blockers,
       productivityScore,
       totalTime,
@@ -205,20 +234,44 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                    <div key={task.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-4 bg-muted border border-border hover:border-accent transition-colors">
                        <div className="md:col-span-12 lg:col-span-6">
                            <div className="flex flex-col">
-                               <span className="text-[9px] uppercase font-black text-gray-500 tracking-widest mb-1">Target</span>
-                               <span className="text-white font-bold uppercase truncate">{task.description}</span>
-                               <div className="flex items-center gap-4 mt-2">
-                                   <div className="flex items-center gap-1">
-                                       <span className="text-[10px] uppercase tracking-widest text-gray-500">Est:</span>
-                                       <span className="text-[10px] uppercase tracking-widest font-black text-white">{task.estimatedTimeAtLogDate?.toFixed(1)}h</span>
-                                   </div>
-                                   <div className="flex items-center gap-1">
-                                       <span className="text-[10px] uppercase tracking-widest text-gray-500">Var:</span>
-                                       <span className={`text-[10px] uppercase tracking-widest font-black ${(task.variance || 0) > 0 ? 'text-red-500' : (task.variance || 0) < 0 ? 'text-green-500' : 'text-gray-400'}`}>
-                                           {(task.variance || 0) > 0 ? '+' : ''}{(task.variance || 0).toFixed(1)}h
-                                       </span>
-                                   </div>
+                               <div className="flex justify-between items-start mb-1">
+                                   <span className="text-[9px] uppercase font-black text-gray-500 tracking-widest">Target</span>
+                                   <label className="flex items-center gap-2 cursor-pointer group">
+                                       <span className="text-[9px] uppercase font-black tracking-widest text-gray-500 group-hover:text-red-500 transition-colors">Mark Missed</span>
+                                       <input 
+                                           type="checkbox" 
+                                           checked={task.isMissed || false}
+                                           onChange={(e) => updateTask(task.id, 'isMissed', e.target.checked)}
+                                           className="accent-red-500 w-3 h-3"
+                                       />
+                                   </label>
                                </div>
+                               <span className={`text-white font-bold uppercase truncate transition-all ${task.isMissed ? 'line-through opacity-50' : ''}`}>{task.description}</span>
+                               {!task.isMissed ? (
+                                   <div className="flex items-center gap-4 mt-2">
+                                       <div className="flex items-center gap-1">
+                                           <span className="text-[10px] uppercase tracking-widest text-gray-500">Est:</span>
+                                           <span className="text-[10px] uppercase tracking-widest font-black text-white">{task.estimatedTimeAtLogDate?.toFixed(1)}h</span>
+                                       </div>
+                                       <div className="flex items-center gap-1">
+                                           <span className="text-[10px] uppercase tracking-widest text-gray-500">Var:</span>
+                                           <span className={`text-[10px] uppercase tracking-widest font-black ${(task.variance || 0) > 0 ? 'text-red-500' : (task.variance || 0) < 0 ? 'text-green-500' : 'text-gray-400'}`}>
+                                               {(task.variance || 0) > 0 ? '+' : ''}{(task.variance || 0).toFixed(1)}h
+                                           </span>
+                                       </div>
+                                   </div>
+                               ) : (
+                                   <div className="mt-2">
+                                       <input
+                                           type="text"
+                                           placeholder="Reason for missing this task?"
+                                           value={task.missedReason || ''}
+                                           onChange={(e) => updateTask(task.id, 'missedReason', e.target.value)}
+                                           className="w-full bg-bg border border-red-500/30 p-2 focus:border-red-500 outline-none text-xs text-white"
+                                           required={task.isMissed}
+                                       />
+                                   </div>
+                               )}
                            </div>
                        </div>
                        
@@ -228,8 +281,9 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                                <input
                                    type="number" min="0" value={task.hours}
                                    onChange={(e) => updateTask(task.id, 'hours', parseInt(e.target.value) || 0)}
-                                   className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-sm font-bold"
-                                   required
+                                   className={`w-full bg-bg border border-border p-2 outline-none text-sm font-bold ${task.isMissed ? 'opacity-30 cursor-not-allowed' : 'focus:border-accent'}`}
+                                   required={!task.isMissed}
+                                   disabled={task.isMissed}
                                />
                            </div>
                            <div className="flex-1">
@@ -237,8 +291,9 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                                <input
                                    type="number" min="0" max="59" value={task.minutes}
                                    onChange={(e) => updateTask(task.id, 'minutes', parseInt(e.target.value) || 0)}
-                                   className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-sm font-bold"
-                                   required
+                                   className={`w-full bg-bg border border-border p-2 outline-none text-sm font-bold ${task.isMissed ? 'opacity-30 cursor-not-allowed' : 'focus:border-accent'}`}
+                                   required={!task.isMissed}
+                                   disabled={task.isMissed}
                                />
                            </div>
                        </div>
@@ -255,7 +310,8 @@ const WorkUpdateForm: React.FC<WorkUpdateFormProps> = ({ user, onSubmit, onCance
                                        setProjectTasks(projectTasks.map(p => p.id === task.projectTaskId ? { ...p, status: e.target.value as ProjectTaskStatus } : p));
                                    }
                                }}
-                               className="w-full bg-bg border border-border p-2 focus:border-accent outline-none text-[10px] font-black uppercase tracking-widest text-gray-300"
+                               className={`w-full bg-bg border border-border p-2 outline-none text-[10px] font-black uppercase tracking-widest text-gray-300 ${task.isMissed ? 'opacity-30 cursor-not-allowed' : 'focus:border-accent'}`}
+                               disabled={task.isMissed}
                            >
                                <option value={ProjectTaskStatus.NOT_STARTED}>Not Started</option>
                                <option value={ProjectTaskStatus.IN_PROGRESS}>In Progress</option>
