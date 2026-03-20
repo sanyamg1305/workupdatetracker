@@ -265,6 +265,7 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
                     currentUserId={user.id}
                     initialData={editingTask}
                     activeFolderId={activeFolderId}
+                    folders={folders}
                 />
             )}
 
@@ -294,8 +295,9 @@ const TaskSystem: React.FC<TaskSystemProps> = ({ user, users }) => {
 };
 
 // Simplified Internal Modals for speed/cohesion
-const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData, activeFolderId }: any) => {
+const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData, activeFolderId, folders = [] }: any) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
     const [formData, setFormData] = useState({
         title: initialData?.title || '',
         description: initialData?.description || '',
@@ -309,7 +311,8 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
         endDate: initialData?.endDate || new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0],
         timeEstimate: initialData?.timeEstimate || 4,
         status: initialData?.status || ProjectTaskStatus.NOT_STARTED,
-        priority: initialData?.priority || ProjectTaskPriority.MEDIUM
+        priority: initialData?.priority || ProjectTaskPriority.MEDIUM,
+        subtasks: initialData?.subtasks || []
     });
 
     return (
@@ -347,6 +350,19 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
                                 onChange={e => setFormData({ ...formData, client: e.target.value })}
                                 className="w-full bg-muted border border-border p-3 text-white outline-none focus:border-accent font-bold uppercase"
                             />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-black">Folder</label>
+                            <select
+                                value={formData.folderId || 'UNASSIGNED'}
+                                onChange={e => setFormData({ ...formData, folderId: e.target.value === 'UNASSIGNED' ? null : e.target.value })}
+                                className="w-full bg-muted border border-border p-3 text-white outline-none focus:border-accent font-bold uppercase"
+                            >
+                                <option value="UNASSIGNED">-- Unassigned --</option>
+                                {folders.map((f: any) => (
+                                    <option key={f.id} value={f.id}>{f.name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="col-span-2 md:col-span-1">
                             <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-black">Primary Owner (Optional)</label>
@@ -471,6 +487,76 @@ const TaskModal = ({ isOpen, onClose, onSave, users, currentUserId, initialData,
                                 <option value={ProjectTaskPriority.HIGH}>High</option>
                             </select>
                         </div>
+
+                        {/* Subtasks Section */}
+                        <div className="col-span-2 border-t border-border/50 pt-6 mt-2">
+                            <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-4 font-black flex items-center gap-2">
+                                <Icons.Check /> Subtasks
+                            </label>
+                            <div className="space-y-3 mb-4">
+                                {formData.subtasks.map((st: any) => (
+                                    <div key={st.id} className="flex items-center gap-3 bg-muted/50 border border-border p-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={st.isCompleted}
+                                            onChange={(e) => {
+                                                const updated = formData.subtasks.map((sub: any) => sub.id === st.id ? { ...sub, isCompleted: e.target.checked } : sub);
+                                                setFormData({ ...formData, subtasks: updated });
+                                            }}
+                                            className="accent-accent w-4 h-4 ml-2"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={st.title}
+                                            onChange={(e) => {
+                                                const updated = formData.subtasks.map((sub: any) => sub.id === st.id ? { ...sub, title: e.target.value } : sub);
+                                                setFormData({ ...formData, subtasks: updated });
+                                            }}
+                                            className="flex-1 bg-transparent text-white text-xs font-bold outline-none"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const updated = formData.subtasks.filter((sub: any) => sub.id !== st.id);
+                                                setFormData({ ...formData, subtasks: updated });
+                                            }}
+                                            className="text-gray-500 hover:text-red-500 px-2 flex items-center justify-center w-6 h-6"
+                                        >
+                                            <Icons.X />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newSubtaskTitle}
+                                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                                    placeholder="Add a new subtask..."
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            if (newSubtaskTitle.trim()) {
+                                                setFormData({ ...formData, subtasks: [...formData.subtasks, { id: Math.random().toString(36).substr(2, 9), title: newSubtaskTitle.trim(), isCompleted: false }] });
+                                                setNewSubtaskTitle('');
+                                            }
+                                        }
+                                    }}
+                                    className="flex-1 bg-muted border border-border p-3 text-white outline-none focus:border-accent font-bold text-xs"
+                                />
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        if (newSubtaskTitle.trim()) {
+                                            setFormData({ ...formData, subtasks: [...formData.subtasks, { id: Math.random().toString(36).substr(2, 9), title: newSubtaskTitle.trim(), isCompleted: false }] });
+                                            setNewSubtaskTitle('');
+                                        }
+                                    }}
+                                    className="bg-muted border border-border hover:border-accent text-gray-400 hover:text-white px-4 font-black text-[10px] uppercase tracking-widest transition-colors"
+                                >
+                                    Add
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div className="p-6 border-t border-border flex justify-end gap-4 bg-muted/30">
@@ -580,6 +666,8 @@ const FolderModal = ({ isOpen, onClose, onSave, users, isAdmin }: any) => {
 
 const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
     const isCompleted = task.status === ProjectTaskStatus.COMPLETED;
+    const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+    const [showAddSubtask, setShowAddSubtask] = useState(false);
 
     const toggleComplete = async () => {
         const newStatus = isCompleted ? ProjectTaskStatus.IN_PROGRESS : ProjectTaskStatus.COMPLETED;
@@ -618,6 +706,63 @@ const TaskCard = ({ task, user, users, onEdit, onRefresh }: any) => {
                             </div>
                             <h4 className={`text-base md:text-lg font-black uppercase leading-tight group-hover:text-accent transition-colors break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>{task.title || 'Untitled Task'}</h4>
                             <p className="text-[11px] md:text-xs text-gray-500 mt-2 line-clamp-2 max-w-full">{task.description || 'No description provided.'}</p>
+                            {task.subtasks && task.subtasks.length > 0 && (
+                                <div className="mt-4 space-y-2">
+                                    {task.subtasks.map((sub: any) => (
+                                        <div key={sub.id} className="flex items-center gap-2 group/subtask">
+                                            <input
+                                                type="checkbox"
+                                                checked={sub.isCompleted}
+                                                onChange={async (e) => {
+                                                    const updatedSubtasks = task.subtasks.map((s: any) => s.id === sub.id ? { ...s, isCompleted: e.target.checked } : s);
+                                                    await storageService.saveTask({ ...task, subtasks: updatedSubtasks });
+                                                    onRefresh(true);
+                                                }}
+                                                className="accent-accent w-3 h-3"
+                                            />
+                                            <span className={`text-[10px] font-bold uppercase transition-colors ${sub.isCompleted ? 'text-gray-500 line-through' : 'text-gray-300'}`}>{sub.title}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Inline Add Subtask */}
+                            <div className="mt-3">
+                                {showAddSubtask ? (
+                                    <div className="flex gap-2 items-center">
+                                        <input
+                                            type="text"
+                                            value={newSubtaskTitle}
+                                            onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                                            placeholder="Subtask title..."
+                                            onKeyDown={async (e) => {
+                                                if (e.key === 'Enter' && newSubtaskTitle.trim()) {
+                                                    const updatedSubtasks = [...(task.subtasks || []), { id: Math.random().toString(36).substr(2, 9), title: newSubtaskTitle.trim(), isCompleted: false }];
+                                                    setNewSubtaskTitle('');
+                                                    setShowAddSubtask(false);
+                                                    await storageService.saveTask({ ...task, subtasks: updatedSubtasks });
+                                                    onRefresh(true);
+                                                }
+                                            }}
+                                            autoFocus
+                                            className="flex-1 bg-bg border border-border p-1.5 text-white text-[10px] font-bold outline-none focus:border-accent"
+                                        />
+                                        <button 
+                                            onClick={() => { setShowAddSubtask(false); setNewSubtaskTitle(''); }}
+                                            className="text-gray-500 hover:text-white flex items-center justify-center w-4 h-4"
+                                        >
+                                            <Icons.X />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowAddSubtask(true)}
+                                        className="text-[9px] font-black uppercase text-gray-500 hover:text-accent transition-colors flex items-center gap-1 mt-1"
+                                    >
+                                        <div className="flex items-center justify-center w-3 h-3"><Icons.Plus /></div> Add Subtask
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div className="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between md:justify-start gap-3">
                             <select

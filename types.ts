@@ -107,6 +107,12 @@ export interface TaskFolder {
   createdAt: string;
 }
 
+export interface SubTask {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+}
+
 export interface ProjectTask {
   id: string;
   title: string;
@@ -122,5 +128,6 @@ export interface ProjectTask {
   status: ProjectTaskStatus;
   priority: ProjectTaskPriority;
   isCollaborative: boolean;
+  subtasks?: SubTask[];
   createdAt: string;
 }
