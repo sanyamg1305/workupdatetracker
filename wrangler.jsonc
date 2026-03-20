@@ -1,5 +1,5 @@
 {
-    "name": "myntmore-work-update-tracker",
+    "name": "workupdatetracker",
     "compatibility_date": "2025-02-20",
     "assets": {
         "directory": "./dist"
